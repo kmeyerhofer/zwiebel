@@ -1,4 +1,4 @@
-require "lib/zwiebel"
+require_relative "../lib/zwiebel"
 
 RSpec.configure do |c|
 end
