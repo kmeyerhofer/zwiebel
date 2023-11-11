@@ -16,7 +16,7 @@
 module Zwiebel
 
   class Control
-    attr_accessor :host, :port
+    attr_accessor :cookie, :host, :port
 
     def initialize(host: "127.0.0.1", port: 9051, cookie: nil)
       @host = host
@@ -32,11 +32,12 @@ module Zwiebel
     end
 
     def connected?
-      @socket.nil?
+      !@socket.nil?
     end
 
     def close
       @socket.close unless @socket.nil?
+      @authenticated = false
       @socket = nil
     end
 
@@ -58,7 +59,7 @@ module Zwiebel
     end
 
     def version
-      send_command("GETINFO", "VERSION")
+      send_command("GETINFO", "version")
       reply = read_reply.split("=").last
       read_reply
       reply
@@ -70,7 +71,7 @@ module Zwiebel
     end
 
     def send_line(line)
-      @socket.write(line.to_s + "\r\n")
+      @socket.write("#{line}\r\n")
       @socket.flush
     end
 
