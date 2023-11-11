@@ -1,6 +1,6 @@
 require_relative "../spec_helper"
 
-RSpec.describe "Tor" do
+RSpec.describe "Zwiebel" do
 
   context "verify v3 onion address" do
     it "valid" do
