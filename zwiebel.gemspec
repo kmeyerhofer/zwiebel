@@ -18,4 +18,5 @@ Gem::Specification.new do |gem|
   gem.requirements = ["Tor (>= 0.3.2.1)"]
   gem.add_runtime_dependency "base32", "~> 0.3"
   gem.add_development_dependency "rspec"
+  gem.add_development_dependency "pry"
 end
