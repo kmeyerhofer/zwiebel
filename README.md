@@ -25,10 +25,9 @@ tor = Zwiebel::Control.new(
   port: 9051, # default
   cookie: cookie_hash
 )
-tor.connect
 # use control protocol
-tor.version
 tor.authenticate
+tor.version
 tor.send_command("GETINFO", "md/all")
 tor.read_reply # read one line at a time
 tor.quit
