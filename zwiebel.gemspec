@@ -17,6 +17,5 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.requirements = ["Tor (>= 0.3.2.1)"]
   gem.add_runtime_dependency "base32", "~> 0.3"
-  gem.add_development_dependency "rspec"
-  gem.add_development_dependency "pry"
+  gem.add_development_dependency "rspec", "~> 3.12"
 end
