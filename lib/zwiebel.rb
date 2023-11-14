@@ -14,6 +14,8 @@
 # If not, see <https://www.gnu.org/licenses/>.
 
 require "base32"
+require_relative "zwiebel/control"
+require_relative "zwiebel/version"
 
 module Zwiebel
 
@@ -43,5 +45,16 @@ module Zwiebel
     checksum_truncated = digest.byteslice(0, 2)
 
     checksum_truncated == checksum
+  end
+
+  def self.cookie_file_hash(file_path:)
+    if !File.exist?(file_path)
+      raise StandardError "cookie file not present"
+    elsif !File.readable?(file_path)
+      raise StandardError "not permitted to read cookie file"
+    else
+      data = IO.binread(file_path)
+      data.unpack("H*")[0]
+    end
   end
 end

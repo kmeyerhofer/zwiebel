@@ -15,11 +15,34 @@ gem "zwiebel"
 
 ## Usage
 
+### Tor control API
+
 ```ruby
+# cookie auth
+cookie_hash = Zwiebel.cookie_file_hash(file_path: "/run/tor/control.authcookie")
+tor = Zwiebel::Control.new(
+  host: "127.0.0.1", # default
+  port: 9051, # default
+  cookie: cookie_hash
+)
+# use control protocol
+tor.authenticate
+tor.version
+tor.send_command("GETINFO", "md/all")
+tor.read_reply # read one line at a time
+tor.quit
+```
+
+### Tor utility
+```ruby
+# V3 address checksum verification
 onion_address = "qubesosfasa4zl44o4tws22di6kepyzfeqv3tg4e3ztknltfxqrymdad.onion"
 if Zwiebel.v3_address_valid?(onion_address)
   # do something great
 end
+
+# read Tor auth cookie
+cookie_hash = Zwiebel.cookie_file_hash(file_path: "/run/tor/control.authcookie")
 ```
 
 ## License
