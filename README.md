@@ -45,6 +45,17 @@ end
 cookie_hash = Zwiebel.cookie_file_hash(file_path: "/run/tor/control.authcookie")
 ```
 
+
+## Development
+
+### Releases
+
+- Update `lib/version.rb`.
+- Add `CHANGELOG` entry.
+- `gem build zwiebel.gemspec`
+- `gem push zwiebel-version.gem`
+- Add version tag - `git tag -a v0.0.3 -m "Version 0.0.3"`
+
 ## License
 
 This gem is available as open source under the terms of [LGPL-3 or later](https://www.gnu.org/licenses/lgpl-3.0.html).
