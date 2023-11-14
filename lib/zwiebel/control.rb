@@ -14,7 +14,6 @@
 # If not, see <https://www.gnu.org/licenses/>.
 
 module Zwiebel
-
   class Control
     attr_accessor :cookie, :host, :port
 
@@ -78,6 +77,5 @@ module Zwiebel
     def read_reply
       @socket.readline.chomp
     end
-
   end
 end
