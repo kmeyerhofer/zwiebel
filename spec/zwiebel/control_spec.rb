@@ -12,6 +12,7 @@ RSpec.describe "Zwiebel::Control" do
 
   after(:each) do
     @server.socket.close
+    @tor_client.close
   end
 
   it "connected" do
@@ -30,5 +31,4 @@ RSpec.describe "Zwiebel::Control" do
   it "version" do
     expect(@tor_client.version).to eq "0.3.5"
   end
-
 end
