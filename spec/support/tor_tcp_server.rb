@@ -19,12 +19,13 @@ class TorTcpServer
 
   def handle_data(data)
     if @client
+      # Mock returned data
       if data.match?(/authenticate/i)
         @client.puts("250 OK\n")
       elsif data.match?(/version/i)
-        @client.puts("250-version=0.3.5\n")
+        @client.puts("250-version=0.3.5\n250 OK\n")
       else
-        puts @client.puts("#{data}\n")
+        @client.puts("#{data}\n")
       end
     end
   end

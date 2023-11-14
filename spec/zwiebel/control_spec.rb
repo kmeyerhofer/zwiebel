@@ -27,7 +27,7 @@ RSpec.describe "Zwiebel::Control" do
     expect(@tor_client.authenticated?).to eq true
   end
 
-  xit "version" do
+  it "version" do
     expect(@tor_client.version).to eq "0.3.5"
   end
 
