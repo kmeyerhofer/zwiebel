@@ -31,7 +31,7 @@ module Zwiebel
     #    - H is SHA3-256
     #    - CHECKSUM is truncated to two bytes before inserting it in onion_address
 
-    return false unless address.end_with?(".onion") && address.length == 62
+    return false unless address.is_a?(String) && address.end_with?(".onion") && address.length == 62
 
     decoded_address = Base32.decode(address.gsub(".onion", "").upcase)
     pubkey = decoded_address.byteslice(0, 32)
