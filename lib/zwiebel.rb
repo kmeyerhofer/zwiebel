@@ -15,6 +15,7 @@
 
 require "base32"
 require_relative "zwiebel/control"
+require_relative "zwiebel/utilities"
 require_relative "zwiebel/version"
 
 module Zwiebel
