@@ -15,7 +15,7 @@ Gem::Specification.new do |gem|
   gem.files = Dir.glob("lib/**/*.rb")
   gem.platform = Gem::Platform::RUBY
   gem.require_paths = ["lib"]
-  gem.requirements = ["Tor (>= 0.3.2.1)"]
+  gem.requirements = ["Tor (>= 0.4.1.1-alpha)"]
   gem.add_runtime_dependency "base32", "~> 0.3"
   gem.add_development_dependency "rspec", "~> 3.12"
 end
