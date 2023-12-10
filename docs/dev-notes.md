@@ -17,7 +17,6 @@ end
 ddg_address = "duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twagswzczad"
 raise "Invalid" unless Zwiebel.v3_address_valid?("#{ddg_address}.onion")
 
-hs_descriptor = []
 tor.send_command("GETINFO", "hs/client/desc/id/#{ddg_address}")
 
 hs_reply = tor.read_reply
@@ -29,9 +28,41 @@ if hs_reply.start_with?('551')
   hs_reply = tor.read_reply
 end
 
+hs_descriptor = {}
+descriptor_current_field = nil
+fields = %w(hs-descriptor descriptor-lifetime descriptor-signing-key-cert revision-counter superencrypted signature)
+
 while hs_reply != "250 OK"
   hs_reply = tor.read_reply
-  hs_descriptor << hs_reply
+  next if hs_reply == "." || hs_reply == "250 OK"
+
+  # Save response in object, key/value format
+  # {
+  #   "hs-descriptor" => "3",
+  #   "descriptor-lifetime" => "180",
+  #   "descriptor_signing-key-cert" => "-----BEGIN ED25519 CERT-----cert-----END ED25519 CERT-----",
+  #   # etc
+  # }
+
+  hs_reply_field = hs_reply.split(" ")[0]
+  if fields.include?(hs_reply_field)
+    descriptor_current_field = hs_reply_field
+
+    if hs_descriptor[descriptor_current_field].nil? && !hs_reply.split(" ")[1..-1].nil?
+      hs_descriptor[descriptor_current_field] = hs_reply.split(" ")[1..-1].join(" ")
+    else
+      hs_descriptor[descriptor_current_field] = ""
+    end
+  else
+    hs_descriptor_value = hs_descriptor[descriptor_current_field]
+
+    if hs_descriptor_value.nil?
+      hs_descriptor[descriptor_current_field] = hs_reply
+    else
+      hs_descriptor[descriptor_current_field] = hs_descriptor_value + hs_reply
+    end
+  end
+
 end
 
 ```
