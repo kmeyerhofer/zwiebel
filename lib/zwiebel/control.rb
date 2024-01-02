@@ -15,7 +15,7 @@
 
 module Zwiebel
   class Control
-    attr_accessor :cookie, :host, :port
+    attr_accessor :cookie, :host, :port, :socket
 
     def initialize(host: "127.0.0.1", port: 9051, cookie: nil)
       @host = host
@@ -76,6 +76,10 @@ module Zwiebel
 
     def read_reply
       @socket.readline.chomp
+    end
+
+    def read_whole_reply
+      @socket.read(1000)
     end
   end
 end

@@ -1,4 +1,6 @@
 
+# Development notes
+
 ```ruby
 require_relative 'lib/zwiebel'
 cookie_hash = Zwiebel.cookie_file_hash(file_path: "/run/tor/control.authcookie")
@@ -66,3 +68,14 @@ while hs_reply != "250 OK"
 end
 
 ```
+
+## Next steps
+
+2.5.1.1 First layer of encryption logic
+  Understand how to get the blinded public key
+
+2.1 Deriving blinded keys and subcredentials `[SUBCRED]`
+  Each time period, the hs host uses a different blinded private key.
+
+1.9 A menagerie of keys
+  master (hidden service) identity key. Public key encoded in the ".onion" address.
