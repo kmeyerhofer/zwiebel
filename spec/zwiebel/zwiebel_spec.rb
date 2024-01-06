@@ -19,6 +19,19 @@ RSpec.describe "Zwiebel" do
     end
   end
 
+  context "v3 onion address public key" do
+    it "valid" do
+      key_bytes = Zwiebel.v3_address_pubkey("sltib6sxkuxh2scmtuvd5w2g7pahnzkovefxpo4e4ptnkzl5kkq5h2ad.onion")
+
+      hex_string = key_bytes.unpack("H*")[0]
+      expect(hex_string).to eq "92e680fa57552e7d484c9d2a3edb46fbc076e54ea90b77bb84e3e6d5657d52a1"
+    end
+
+    xcontext "invalid" do
+      it { expect(Zwiebel.v3_address_pubkey(nil)).to raise_with(StandardError) }
+    end
+  end
+
   it "cookie file hash" do
     bytes = SecureRandom.bytes(20)
     file = Tempfile.create("test_file")
