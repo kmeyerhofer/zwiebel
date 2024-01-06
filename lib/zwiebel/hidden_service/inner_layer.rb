@@ -1,4 +1,4 @@
-# Copyright 2023-2024, Kurt Meyerhofer
+# Copyright 2023 - 2024, Kurt Meyerhofer
 # This file is part of zwiebel.
 
 # zwiebel is free software: you can redistribute it and/or modify it under the terms of
@@ -13,23 +13,10 @@
 # You should have received a copy of the GNU Lesser General Public License along with zwiebel.
 # If not, see <https://www.gnu.org/licenses/>.
 
-require "base64"
-require "ed25519"
-
 module Zwiebel
-  class Utilities
-    def self.current_time_period
-      # tor rend-spec-v3
-      # 2.2.1 [TIME-PERIODS]
-      current_time = Time.now.utc.to_i
-      (current_time / 60 - 1440) / 1440
-    end
+  module HiddenService
+    class InnerLayer
 
-    def self.ed25519_certificate(cert)
-      # if cert.starts_with?("-----BEGIN ED25519 CERT-----") && cert.ends_with?("-----END ED25519 CERT-----")
-      cert_content = cert.gsub("-----BEGIN ED25519 CERT-----", "").gsub("-----END ED25519 CERT-----", "")
-
-      # end
     end
   end
 end

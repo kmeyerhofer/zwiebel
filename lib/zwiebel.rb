@@ -1,4 +1,4 @@
-# Copyright 2023, Kurt Meyerhofer
+# Copyright 2023-2024, Kurt Meyerhofer
 # This file is part of zwiebel.
 
 # zwiebel is free software: you can redistribute it and/or modify it under the terms of
@@ -46,6 +46,13 @@ module Zwiebel
     checksum_truncated = digest.byteslice(0, 2)
 
     checksum_truncated == checksum
+  end
+
+  def self.v3_address_pubkey(address)
+    raise ::StandardError.new("address invalid") unless v3_address_valid?(address)
+
+    decoded_address = Base32.decode(address.gsub(".onion", "").upcase)
+    decoded_address.byteslice(0, 32)
   end
 
   def self.cookie_file_hash(file_path:)

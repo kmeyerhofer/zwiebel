@@ -1,4 +1,4 @@
-# Copyright 2023, Kurt Meyerhofer
+# Copyright 2023-2024, Kurt Meyerhofer
 # This file is part of zwiebel.
 
 # zwiebel is free software: you can redistribute it and/or modify it under the terms of
