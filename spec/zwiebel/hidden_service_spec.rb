@@ -12,4 +12,13 @@ RSpec.describe "Hidden Service" do
     expect(descriptor.superencrypted).to include("lNhvFDFnfjx/TArL0Yl0zdYqYydAxygJMynXyMvv0+MKv25L4uV")
     expect(descriptor.signature).to eq "aglChCQF+lbzKgyxJJTpYGVShV/GMDRJ4+cRGCp+a2y/yX/tLSh7hzqI7rVZrUoGj74Xr1CLMYO3fXYCS+DPDQ"
   end
+
+  it "decrypts descriptor" do
+    onion_address = "sltib6sxkuxh2scmtuvd5w2g7pahnzkovefxpo4e4ptnkzl5kkq5h2ad.onion"
+    descriptor_file = File.open("#{RSPEC_DIR}/support/files/hidden_service_v3")
+    descriptor = Zwiebel::HiddenService::Descriptor.new(string: descriptor_file.read)
+
+    outer_layer = Zwiebel::HiddenService::OuterLayer.new(descriptor: descriptor, onion_address: onion_address)
+
+  end
 end
