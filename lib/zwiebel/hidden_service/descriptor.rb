@@ -16,7 +16,61 @@
 module Zwiebel
   module HiddenService
     class Descriptor
+      FIELDS = %w(hs-descriptor descriptor-lifetime descriptor-signing-key-cert revision-counter superencrypted signature).freeze
+      attr_accessor :string
+      def initialize(string:)
+        @string = string
+        parse
+      end
 
+      def parse
+        @hs_descriptor = {}
+        descriptor_current_field = nil
+        string.each_line do |line|
+          line_field = line.split(" ")[0]
+          if FIELDS.include?(line_field)
+            descriptor_current_field = line_field
+
+            if @hs_descriptor[descriptor_current_field].nil? && !line.split(" ")[1..-1].nil?
+              @hs_descriptor[descriptor_current_field] = line.split(" ")[1..-1].join(" ")
+            else
+              @hs_descriptor[descriptor_current_field] = ""
+            end
+          else
+            hs_descriptor_value = @hs_descriptor[descriptor_current_field]
+
+            if hs_descriptor_value.nil?
+              @hs_descriptor[descriptor_current_field] = line
+            else
+              @hs_descriptor[descriptor_current_field] = hs_descriptor_value + line
+            end
+          end
+        end
+      end
+
+      def hs_descriptor
+        @hs_descriptor["hs-descriptor"]&.to_i
+      end
+
+      def descriptor_lifetime
+        @hs_descriptor["descriptor-lifetime"]&.to_i
+      end
+
+      def descriptor_signing_key_cert
+        @hs_descriptor["descriptor-signing-key-cert"]
+      end
+
+      def revision_counter
+        @hs_descriptor["revision-counter"]&.to_i
+      end
+
+      def superencrypted
+        @hs_descriptor["superencrypted"]
+      end
+
+      def signature
+        @hs_descriptor["signature"]
+      end
     end
   end
 end
