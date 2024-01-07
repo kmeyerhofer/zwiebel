@@ -35,6 +35,17 @@ module Zwiebel
     end
 
     def self.decrypt_layer(encrypted_data:, constant:, revision_counter:, subcredential:, blinded_key:)
+      cleaned_data = encrypted_data.gsub("-----BEGIN MESSAGE-----\n", "").gsub("\n-----END MESSAGE-----", "")
+      encrypted = Base64.decode(cleaned_data)
+
+      if encrypted.length < SALT_LENGTH + MAC_LENGTH
+        # error
+      end
+
+      salt = encrypted[0..SALT_LENGTH]
+      ciphertext = encrypted[SALT_LENGTH..-MAC_LENGTH]
+      expected_mac = encrypted[-MAC_LENGTH..-1]
+
 
     end
   end
