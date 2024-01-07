@@ -18,6 +18,9 @@ require "ed25519"
 
 module Zwiebel
   class Utilities
+    SALT_LENGTH = 16
+    MAC_LENGTH = 32
+
     def self.current_time_period
       # tor rend-spec-v3
       # 2.2.1 [TIME-PERIODS]
@@ -26,10 +29,13 @@ module Zwiebel
     end
 
     def self.ed25519_certificate(cert)
-      # if cert.starts_with?("-----BEGIN ED25519 CERT-----") && cert.ends_with?("-----END ED25519 CERT-----")
-      cert_content = cert.gsub("-----BEGIN ED25519 CERT-----", "").gsub("-----END ED25519 CERT-----", "")
+      # cert_signing_key = cert.gsub("-----BEGIN ED25519 CERT-----", "").gsub("-----END ED25519 CERT-----", "").gsub("\n", "")
+      cert_signing_key = cert.gsub("-----BEGIN ED25519 CERT-----\n", "").gsub("\n-----END ED25519 CERT-----", "")
+      cert_signing_key
+    end
 
-      # end
+    def self.decrypt_layer(encrypted_data:, constant:, revision_counter:, subcredential:, blinded_key:)
+
     end
   end
 end

@@ -16,15 +16,16 @@
 module Zwiebel
   module HiddenService
     class OuterLayer
-      attr_accessor :descriptor, :onion_address
-      def initialize(descriptor:, onion_address:)
-        @descriptor = descriptor
-        @onion_address = onion_address
-        decrypt
+      attr_accessor :decrypted_data
+      def initialize(decrypted_data:)
+        @decrypted_data = decrypted_data
+        parse
+        # decrypt
       end
 
-      def decrypt
-
+      def parse
+        # Store in hash
+        @outer_layer = {}
       end
     end
   end

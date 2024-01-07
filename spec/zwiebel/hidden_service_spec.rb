@@ -16,9 +16,10 @@ RSpec.describe "Hidden Service" do
   it "decrypts descriptor" do
     onion_address = "sltib6sxkuxh2scmtuvd5w2g7pahnzkovefxpo4e4ptnkzl5kkq5h2ad.onion"
     descriptor_file = File.open("#{RSPEC_DIR}/support/files/hidden_service_v3")
-    descriptor = Zwiebel::HiddenService::Descriptor.new(string: descriptor_file.read)
+    hidden_service_v3 = Zwiebel::HiddenService::V3.new(descriptor_string: descriptor_file.read)
+    # descriptor = Zwiebel::HiddenService::Descriptor.new(string: descriptor_file.read)
 
-    outer_layer = Zwiebel::HiddenService::OuterLayer.new(descriptor: descriptor, onion_address: onion_address)
+    # outer_layer = Zwiebel::HiddenService::OuterLayer.new(descriptor: descriptor, onion_address: onion_address)
 
   end
 end

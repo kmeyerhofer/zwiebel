@@ -14,6 +14,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 
 require "base32"
+require_relative "zwiebel/hidden_service/v3"
 require_relative "zwiebel/hidden_service/descriptor"
 require_relative "zwiebel/hidden_service/outer_layer"
 require_relative "zwiebel/hidden_service/inner_layer"
