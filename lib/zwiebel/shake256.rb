@@ -32,6 +32,7 @@ module Zwiebel
       @reset = true
       @block = 0
       @start = 0
+      @keccak_count = 0
       @block_count = (1600 - (256 << 1)) >> 5
       @byte_count = @block_count << 2
       @output_blocks = @bit_length >> 5
@@ -73,7 +74,7 @@ module Zwiebel
             @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
             i += 1
           else
-            code = 0x10000 + (((code & 0x3ff) << 10) | (data_codes(index += 1) & 0x3ff))
+            code = 0x10000 + (((code & 0x3ff) << 10) | (data_codes[index += 1] & 0x3ff))
             @blocks[i >> 2] |= (0xf0 | (code >> 18)) << SHIFT[i & 3]
             i += 1
             @blocks[i >> 2] |= (0x80 | ((code >> 12) & 0x3f)) << SHIFT[i & 3]
@@ -83,6 +84,7 @@ module Zwiebel
             @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
             i += 1
           end
+          index += 1
         end
 
         @last_byte_index = i
@@ -99,7 +101,6 @@ module Zwiebel
           @start = i
         end
 
-        index += 1
       end
       # p "@block", @block
       # p '@blocks', @blocks
@@ -120,16 +121,16 @@ module Zwiebel
           j += 1
           i += 1
         end
-        p 'j', j
-        p "@block_count", @block_count
+        # p 'j', j
+        # p "@block_count", @block_count
         if j % @block_count == 0
           s = s.dup
           keccak(s)
           i = 0
         end
       end
-      p hex
-      p "@extra_bytes", @extra_bytes
+      # p hex
+      # p "@extra_bytes", @extra_bytes
       # binding.pry
       if @extra_bytes > 0
         block = s[i]
@@ -141,6 +142,7 @@ module Zwiebel
           hex += HEX_CHARS[(block >> 20) & 0x0F] + HEX_CHARS[(block >> 16) & 0x0F]
         end
       end
+      # p '@keccak_count', @keccak_count
       hex
     end
 
@@ -162,10 +164,13 @@ module Zwiebel
       0.upto(@block_count - 1) do |x|
         @s[x] ^= @blocks[x]
       end
+      # p 'before ', @s
       keccak(@s)
+      # p 'after ', @s
     end
 
     def keccak(s)
+      # Ensure this method modifies the parameter array!
       (0..47).step(2) do |n|
         c0 = s[0] ^ s[10] ^ s[20] ^ s[30] ^ s[40]
         c1 = s[1] ^ s[11] ^ s[21] ^ s[31] ^ s[41]
@@ -470,12 +475,6 @@ module Zwiebel
       mask = (1 << (32 - amount)) - 1
       (val >> amount) & mask
     end
-
-    # def plus_plus(num, increment)
-    #   current_value = num
-    #   num += increment
-    #   current_value
-    # end
 
   end
 end
