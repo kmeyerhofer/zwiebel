@@ -29,6 +29,7 @@ module Zwiebel
     def initialize(bit_length:)
       @bit_length = bit_length
       @finalized = false
+      @reset = true
       @block = 0
       @start = 0
       @block_count = (1600 - (256 << 1)) >> 5
@@ -43,75 +44,101 @@ module Zwiebel
       return if data.nil?
       length = data.length
       index = 0
-      i = 0
+      i = nil
       data_codes = data.codepoints
       while index < length
-        # while index < length &&
+        if @reset
+          @reset = false
+          @blocks[0] = @block
+          1.upto(@block_count+1) do |x|
+            @blocks[x] = 0
+          end
+        end
+        i = @start
         while index < length && i < @byte_count
           code = data_codes[index]
           if code < 0x80
-            @blocks[i >> 2] |= code << SHIFT[(i += 1) & 3]
+            @blocks[i >> 2] |= code << SHIFT[i & 3]
+            i += 1
           elsif code < 0x800
-            @blocks[i >> 2] |= (0xc0 | (code >> 6)) << SHIFT[(i += 1) & 3];
-            @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[(i += 1) & 3];
+            @blocks[i >> 2] |= (0xc0 | (code >> 6)) << SHIFT[i & 3]
+            i += 1
+            @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
+            i += 1
           elsif code < 0xd800 || code >= 0xe000
-            @blocks[i >> 2] |= (0xe0 | (code >> 12)) << SHIFT[(i += 1) & 3];
-            @blocks[i >> 2] |= (0x80 | ((code >> 6) & 0x3f)) << SHIFT[(i += 1) & 3];
-            @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[(i += 1) & 3];
+            @blocks[i >> 2] |= (0xe0 | (code >> 12)) << SHIFT[i & 3]
+            i += 1
+            @blocks[i >> 2] |= (0x80 | ((code >> 6) & 0x3f)) << SHIFT[i & 3]
+            i += 1
+            @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
+            i += 1
           else
-            code = 0x10000 + (((code & 0x3ff) << 10) | (data_codes(index += 1) & 0x3ff));
-            @blocks[i >> 2] |= (0xf0 | (code >> 18)) << SHIFT[(i += 1) & 3];
-            @blocks[i >> 2] |= (0x80 | ((code >> 12) & 0x3f)) << SHIFT[(i += 1) & 3];
-            @blocks[i >> 2] |= (0x80 | ((code >> 6) & 0x3f)) << SHIFT[(i += 1) & 3];
-            @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[(i += 1) & 3];
+            code = 0x10000 + (((code & 0x3ff) << 10) | (data_codes(index += 1) & 0x3ff))
+            @blocks[i >> 2] |= (0xf0 | (code >> 18)) << SHIFT[i & 3]
+            i += 1
+            @blocks[i >> 2] |= (0x80 | ((code >> 12) & 0x3f)) << SHIFT[i & 3]
+            i += 1
+            @blocks[i >> 2] |= (0x80 | ((code >> 6) & 0x3f)) << SHIFT[i & 3]
+            i += 1
+            @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
+            i += 1
           end
-
-          @last_byte_index = i
-          if i >= @byte_count
-            @start = i - @byte_count
-            @block = @blocks[@block_count]
-            0.upto(@block_count - 1) do |x|
-              @s[x] ^= @blocks[x]
-            end
-            keccak(@s)
-          else
-            @start = i
-          end
-
-          index += 1
         end
+
+        @last_byte_index = i
+
+        if i >= @byte_count
+          @start = i - @byte_count
+          @block = @blocks[@block_count]
+          0.upto(@block_count - 1) do |x|
+            @s[x] ^= @blocks[x]
+          end
+          keccak(@s)
+          @reset = true
+        else
+          @start = i
+        end
+
+        index += 1
       end
-      # binding.pry
+      # p "@block", @block
+      # p '@blocks', @blocks
       finalize
 
-      hex = ''
+      hex = ""
       i = 0
       j = 0
-      while j < @bit_length
-        while j < @bit_length && i < @block_count
-          block = @s[i]
+      s = @s
+      block = nil
+      while j < @output_blocks
+        while i < @block_count && j < @output_blocks
+          block = s[i]
           hex += HEX_CHARS[(block >> 4) & 0x0F] + HEX_CHARS[block & 0x0F] +
-          HEX_CHARS[(block >> 12) & 0x0F] + HEX_CHARS[(block >> 8) & 0x0F] +
-          HEX_CHARS[(block >> 20) & 0x0F] + HEX_CHARS[(block >> 16) & 0x0F] +
-          HEX_CHARS[(block >> 28) & 0x0F] + HEX_CHARS[(block >> 24) & 0x0F]
+            HEX_CHARS[(block >> 12) & 0x0F] + HEX_CHARS[(block >> 8) & 0x0F] +
+            HEX_CHARS[(block >> 20) & 0x0F] + HEX_CHARS[(block >> 16) & 0x0F] +
+            HEX_CHARS[(block >> 28) & 0x0F] + HEX_CHARS[(block >> 24) & 0x0F]
           j += 1
           i += 1
         end
+        p 'j', j
+        p "@block_count", @block_count
         if j % @block_count == 0
-          s = @s.dup
+          s = s.dup
           keccak(s)
           i = 0
         end
       end
-
-      if @extra_bytes
+      p hex
+      p "@extra_bytes", @extra_bytes
+      # binding.pry
+      if @extra_bytes > 0
         block = s[i]
         hex += HEX_CHARS[(block >> 4) & 0x0F] + HEX_CHARS[block & 0x0F]
         if @extra_bytes > 1
           hex += HEX_CHARS[(block >> 12) & 0x0F] + HEX_CHARS[(block >> 8) & 0x0F]
         end
         if @extra_bytes > 2
-          hex += HEX_CHARS[(block >> 20) & 0x0F] + HEX_CHARS[(block >> 16) & 0x0F];
+          hex += HEX_CHARS[(block >> 20) & 0x0F] + HEX_CHARS[(block >> 16) & 0x0F]
         end
       end
       hex
@@ -123,11 +150,11 @@ module Zwiebel
       return if @finalized
 
       @finalized = true
-      i = @last_byte_index
+      i = @last_byte_index.nil? ? 0 : @last_byte_index
       @blocks[i >> 2] |= PADDING[i & 3]
       if @last_byte_index == @byte_count
-        # @blocks[0] = @blocks[@block_count]
-        0.upto(@block_count - 1) do |x|
+        @blocks[0] = @blocks[@block_count]
+        1.upto(@block_count) do |x|
           @blocks[x] = 0
         end
       end
@@ -154,8 +181,10 @@ module Zwiebel
         # h = c8 ^ ((c2 << 1) | (c3 >>> 31))
         # l = c9 ^ ((c3 << 1) | (c2 >>> 31))
 
-        h = c8 ^ ((c2 << 1) | (c3 >> 31))
-        l = c9 ^ ((c3 << 1) | (c2 >> 31))
+        # h = c8 ^ ((c2 << 1) | (c3 >> 31))
+        # l = c9 ^ ((c3 << 1) | (c2 >> 31))
+        h = c8 ^ ((c2 << 1) | (unsigned_shift_right(c3, 31)))
+        l = c9 ^ ((c3 << 1) | (unsigned_shift_right(c2, 31)))
         s[0] ^= h
         s[1] ^= l
         s[10] ^= h
@@ -169,8 +198,11 @@ module Zwiebel
         # h = c0 ^ ((c4 << 1) | (c5 >>> 31))
         # l = c1 ^ ((c5 << 1) | (c4 >>> 31))
 
-        h = c0 ^ ((c4 << 1) | (c5 >> 31))
-        l = c1 ^ ((c5 << 1) | (c4 >> 31))
+        # h = c0 ^ ((c4 << 1) | (c5 >> 31))
+        # l = c1 ^ ((c5 << 1) | (c4 >> 31))
+
+        h = c0 ^ ((c4 << 1) | (unsigned_shift_right(c5, 31)))
+        l = c1 ^ ((c5 << 1) | (unsigned_shift_right(c4, 31)))
         s[2] ^= h
         s[3] ^= l
         s[12] ^= h
@@ -184,8 +216,10 @@ module Zwiebel
         # h = c2 ^ ((c6 << 1) | (c7 >>> 31))
         # l = c3 ^ ((c7 << 1) | (c6 >>> 31))
 
-        h = c2 ^ ((c6 << 1) | (c7 >> 31))
-        l = c3 ^ ((c7 << 1) | (c6 >> 31))
+        # h = c2 ^ ((c6 << 1) | (c7 >> 31))
+        # l = c3 ^ ((c7 << 1) | (c6 >> 31))
+        h = c2 ^ ((c6 << 1) | (unsigned_shift_right(c7, 31)))
+        l = c3 ^ ((c7 << 1) | (unsigned_shift_right(c6, 31)))
         s[4] ^= h
         s[5] ^= l
         s[14] ^= h
@@ -198,8 +232,10 @@ module Zwiebel
         s[45] ^= l
         # h = c4 ^ ((c8 << 1) | (c9 >>> 31))
         # l = c5 ^ ((c9 << 1) | (c8 >>> 31))
-        h = c4 ^ ((c8 << 1) | (c9 >> 31))
-        l = c5 ^ ((c9 << 1) | (c8 >> 31))
+        # h = c4 ^ ((c8 << 1) | (c9 >> 31))
+        # l = c5 ^ ((c9 << 1) | (c8 >> 31))
+        h = c4 ^ ((c8 << 1) | (unsigned_shift_right(c9, 31)))
+        l = c5 ^ ((c9 << 1) | (unsigned_shift_right(c8, 31)))
         s[6] ^= h
         s[7] ^= l
         s[16] ^= h
@@ -212,8 +248,10 @@ module Zwiebel
         s[47] ^= l
         # h = c6 ^ ((c0 << 1) | (c1 >>> 31))
         # l = c7 ^ ((c1 << 1) | (c0 >>> 31))
-        h = c6 ^ ((c0 << 1) | (c1 >> 31))
-        l = c7 ^ ((c1 << 1) | (c0 >> 31))
+        # h = c6 ^ ((c0 << 1) | (c1 >> 31))
+        # l = c7 ^ ((c1 << 1) | (c0 >> 31))
+        h = c6 ^ ((c0 << 1) | (unsigned_shift_right(c1, 31)))
+        l = c7 ^ ((c1 << 1) | (unsigned_shift_right(c0, 31)))
         s[8] ^= h
         s[9] ^= l
         s[18] ^= h
@@ -275,55 +313,103 @@ module Zwiebel
         # b27 = (s[39] << 8) | (s[38] >>> 24)
         # b8  = (s[48] << 14) | (s[49] >>> 18)
         # b9  = (s[49] << 14) | (s[48] >>> 18)
-        b32 = (s[11] << 4) | (s[10] >> 28)
-        b33 = (s[10] << 4) | (s[11] >> 28)
-        b14 = (s[20] << 3) | (s[21] >> 29)
-        b15 = (s[21] << 3) | (s[20] >> 29)
-        b46 = (s[31] << 9) | (s[30] >> 23)
-        b47 = (s[30] << 9) | (s[31] >> 23)
-        b28 = (s[40] << 18) | (s[41] >> 14)
-        b29 = (s[41] << 18) | (s[40] >> 14)
-        b20 = (s[2] << 1) | (s[3] >> 31)
-        b21 = (s[3] << 1) | (s[2] >> 31)
-        b2  = (s[13] << 12) | (s[12] >> 20)
-        b3  = (s[12] << 12) | (s[13] >> 20)
-        b34 = (s[22] << 10) | (s[23] >> 22)
-        b35 = (s[23] << 10) | (s[22] >> 22)
-        b16 = (s[33] << 13) | (s[32] >> 19)
-        b17 = (s[32] << 13) | (s[33] >> 19)
-        b48 = (s[42] << 2) | (s[43] >> 30)
-        b49 = (s[43] << 2) | (s[42] >> 30)
-        b40 = (s[5] << 30) | (s[4] >> 2)
-        b41 = (s[4] << 30) | (s[5] >> 2)
-        b22 = (s[14] << 6) | (s[15] >> 26)
-        b23 = (s[15] << 6) | (s[14] >> 26)
-        b4  = (s[25] << 11) | (s[24] >> 21)
-        b5  = (s[24] << 11) | (s[25] >> 21)
-        b36 = (s[34] << 15) | (s[35] >> 17)
-        b37 = (s[35] << 15) | (s[34] >> 17)
-        b18 = (s[45] << 29) | (s[44] >> 3)
-        b19 = (s[44] << 29) | (s[45] >> 3)
-        b10 = (s[6] << 28) | (s[7] >> 4)
-        b11 = (s[7] << 28) | (s[6] >> 4)
-        b42 = (s[17] << 23) | (s[16] >> 9)
-        b43 = (s[16] << 23) | (s[17] >> 9)
-        b24 = (s[26] << 25) | (s[27] >> 7)
-        b25 = (s[27] << 25) | (s[26] >> 7)
-        b6  = (s[36] << 21) | (s[37] >> 11)
-        b7  = (s[37] << 21) | (s[36] >> 11)
-        b38 = (s[47] << 24) | (s[46] >> 8)
-        b39 = (s[46] << 24) | (s[47] >> 8)
-        b30 = (s[8] << 27) | (s[9] >> 5)
-        b31 = (s[9] << 27) | (s[8] >> 5)
-        b12 = (s[18] << 20) | (s[19] >> 12)
-        b13 = (s[19] << 20) | (s[18] >> 12)
-        b44 = (s[29] << 7) | (s[28] >> 25)
-        b45 = (s[28] << 7) | (s[29] >> 25)
-        b26 = (s[38] << 8) | (s[39] >> 24)
-        b27 = (s[39] << 8) | (s[38] >> 24)
-        b8  = (s[48] << 14) | (s[49] >> 18)
-        b9  = (s[49] << 14) | (s[48] >> 18)
 
+        # b32 = (s[11] << 4) | (s[10] >> 28)
+        # b33 = (s[10] << 4) | (s[11] >> 28)
+        # b14 = (s[20] << 3) | (s[21] >> 29)
+        # b15 = (s[21] << 3) | (s[20] >> 29)
+        # b46 = (s[31] << 9) | (s[30] >> 23)
+        # b47 = (s[30] << 9) | (s[31] >> 23)
+        # b28 = (s[40] << 18) | (s[41] >> 14)
+        # b29 = (s[41] << 18) | (s[40] >> 14)
+        # b20 = (s[2] << 1) | (s[3] >> 31)
+        # b21 = (s[3] << 1) | (s[2] >> 31)
+        # b2  = (s[13] << 12) | (s[12] >> 20)
+        # b3  = (s[12] << 12) | (s[13] >> 20)
+        # b34 = (s[22] << 10) | (s[23] >> 22)
+        # b35 = (s[23] << 10) | (s[22] >> 22)
+        # b16 = (s[33] << 13) | (s[32] >> 19)
+        # b17 = (s[32] << 13) | (s[33] >> 19)
+        # b48 = (s[42] << 2) | (s[43] >> 30)
+        # b49 = (s[43] << 2) | (s[42] >> 30)
+        # b40 = (s[5] << 30) | (s[4] >> 2)
+        # b41 = (s[4] << 30) | (s[5] >> 2)
+        # b22 = (s[14] << 6) | (s[15] >> 26)
+        # b23 = (s[15] << 6) | (s[14] >> 26)
+        # b4  = (s[25] << 11) | (s[24] >> 21)
+        # b5  = (s[24] << 11) | (s[25] >> 21)
+        # b36 = (s[34] << 15) | (s[35] >> 17)
+        # b37 = (s[35] << 15) | (s[34] >> 17)
+        # b18 = (s[45] << 29) | (s[44] >> 3)
+        # b19 = (s[44] << 29) | (s[45] >> 3)
+        # b10 = (s[6] << 28) | (s[7] >> 4)
+        # b11 = (s[7] << 28) | (s[6] >> 4)
+        # b42 = (s[17] << 23) | (s[16] >> 9)
+        # b43 = (s[16] << 23) | (s[17] >> 9)
+        # b24 = (s[26] << 25) | (s[27] >> 7)
+        # b25 = (s[27] << 25) | (s[26] >> 7)
+        # b6  = (s[36] << 21) | (s[37] >> 11)
+        # b7  = (s[37] << 21) | (s[36] >> 11)
+        # b38 = (s[47] << 24) | (s[46] >> 8)
+        # b39 = (s[46] << 24) | (s[47] >> 8)
+        # b30 = (s[8] << 27) | (s[9] >> 5)
+        # b31 = (s[9] << 27) | (s[8] >> 5)
+        # b12 = (s[18] << 20) | (s[19] >> 12)
+        # b13 = (s[19] << 20) | (s[18] >> 12)
+        # b44 = (s[29] << 7) | (s[28] >> 25)
+        # b45 = (s[28] << 7) | (s[29] >> 25)
+        # b26 = (s[38] << 8) | (s[39] >> 24)
+        # b27 = (s[39] << 8) | (s[38] >> 24)
+        # b8  = (s[48] << 14) | (s[49] >> 18)
+        # b9  = (s[49] << 14) | (s[48] >> 18)
+        b32 = (s[11] << 4) | (unsigned_shift_right(s[10], 28))
+        b33 = (s[10] << 4) | (unsigned_shift_right(s[11], 28))
+        b14 = (s[20] << 3) | (unsigned_shift_right(s[21], 29))
+        b15 = (s[21] << 3) | (unsigned_shift_right(s[20], 29))
+        b46 = (s[31] << 9) | (unsigned_shift_right(s[30], 23))
+        b47 = (s[30] << 9) | (unsigned_shift_right(s[31], 23))
+        b28 = (s[40] << 18) | (unsigned_shift_right(s[41], 14))
+        b29 = (s[41] << 18) | (unsigned_shift_right(s[40], 14))
+        b20 = (s[2] << 1) | (unsigned_shift_right(s[3], 31))
+        b21 = (s[3] << 1) | (unsigned_shift_right(s[2], 31))
+        b2  = (s[13] << 12) | (unsigned_shift_right(s[12], 20))
+        b3  = (s[12] << 12) | (unsigned_shift_right(s[13], 20))
+        b34 = (s[22] << 10) | (unsigned_shift_right(s[23], 22))
+        b35 = (s[23] << 10) | (unsigned_shift_right(s[22], 22))
+        b16 = (s[33] << 13) | (unsigned_shift_right(s[32], 19))
+        b17 = (s[32] << 13) | (unsigned_shift_right(s[33], 19))
+        b48 = (s[42] << 2) | (unsigned_shift_right(s[43], 30))
+        b49 = (s[43] << 2) | (unsigned_shift_right(s[42], 30))
+        b40 = (s[5] << 30) | (unsigned_shift_right(s[4], 2))
+        b41 = (s[4] << 30) | (unsigned_shift_right(s[5], 2))
+        b22 = (s[14] << 6) | (unsigned_shift_right(s[15], 26))
+        b23 = (s[15] << 6) | (unsigned_shift_right(s[14], 26))
+        b4  = (s[25] << 11) | (unsigned_shift_right(s[24], 21))
+        b5  = (s[24] << 11) | (unsigned_shift_right(s[25], 21))
+        b36 = (s[34] << 15) | (unsigned_shift_right(s[35], 17))
+        b37 = (s[35] << 15) | (unsigned_shift_right(s[34], 17))
+        b18 = (s[45] << 29) | (unsigned_shift_right(s[44], 3))
+        b19 = (s[44] << 29) | (unsigned_shift_right(s[45], 3))
+        b10 = (s[6] << 28) | (unsigned_shift_right(s[7], 4))
+        b11 = (s[7] << 28) | (unsigned_shift_right(s[6], 4))
+        b42 = (s[17] << 23) | (unsigned_shift_right(s[16], 9))
+        b43 = (s[16] << 23) | (unsigned_shift_right(s[17], 9))
+        b24 = (s[26] << 25) | (unsigned_shift_right(s[27], 7))
+        b25 = (s[27] << 25) | (unsigned_shift_right(s[26], 7))
+        b6  = (s[36] << 21) | (unsigned_shift_right(s[37], 11))
+        b7  = (s[37] << 21) | (unsigned_shift_right(s[36], 11))
+        b38 = (s[47] << 24) | (unsigned_shift_right(s[46], 8))
+        b39 = (s[46] << 24) | (unsigned_shift_right(s[47], 8))
+        b30 = (s[8] << 27) | (unsigned_shift_right(s[9], 5))
+        b31 = (s[9] << 27) | (unsigned_shift_right(s[8], 5))
+        b12 = (s[18] << 20) | (unsigned_shift_right(s[19], 12))
+        b13 = (s[19] << 20) | (unsigned_shift_right(s[18], 12))
+        b44 = (s[29] << 7) | (unsigned_shift_right(s[28], 25))
+        b45 = (s[28] << 7) | (unsigned_shift_right(s[29], 25))
+        b26 = (s[38] << 8) | (unsigned_shift_right(s[39], 24))
+        b27 = (s[39] << 8) | (unsigned_shift_right(s[38], 24))
+        b8  = (s[48] << 14) | (unsigned_shift_right(s[49], 18))
+        b9  = (s[49] << 14) | (unsigned_shift_right(s[48], 18))
         s[0]  = b0 ^ (~b2 & b4)
         s[1]  = b1 ^ (~b3 & b5)
         s[10] = b10 ^ (~b12 & b14)
@@ -378,11 +464,18 @@ module Zwiebel
         s[0] ^= RC[n]
         s[1] ^= RC[n + 1]
       end
-
-
-
-
     end
+
+    def unsigned_shift_right(val, amount)
+      mask = (1 << (32 - amount)) - 1
+      (val >> amount) & mask
+    end
+
+    # def plus_plus(num, increment)
+    #   current_value = num
+    #   num += increment
+    #   current_value
+    # end
 
   end
 end
