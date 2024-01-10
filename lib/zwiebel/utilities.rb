@@ -31,37 +31,53 @@ module Zwiebel
     end
 
     def self.ed25519_certificate(cert)
-      cert_signing_key = cert.gsub("-----BEGIN ED25519 CERT-----", "").gsub("-----END ED25519 CERT-----", "").gsub("\n", "")
-      # cert_signing_key = cert.gsub("-----BEGIN ED25519 CERT-----\n", "").gsub("\n-----END ED25519 CERT-----", "")
-      cert_signing_key
+      # cert_signing_key = cert.gsub("-----BEGIN ED25519 CERT-----", "").gsub("-----END ED25519 CERT-----", "").gsub("\n", "")
+      cert_signing_key = cert.gsub("-----BEGIN ED25519 CERT-----\n", "").gsub("\n-----END ED25519 CERT-----", "")#.gsub("\n", "")
+      # TODO fix this implementation
+      Base64.decode64(cert_signing_key)
     end
 
     def self.decrypt_layer(encrypted_data:, constant:, revision_counter:, subcredential:, blinded_key:)
-      cleaned_data = encrypted_data.gsub("-----BEGIN MESSAGE-----\n", "").gsub("\n-----END MESSAGE-----", "").gsub("\n", "")
+      cleaned_data = encrypted_data.gsub("-----BEGIN MESSAGE-----\n", "").gsub("\n-----END MESSAGE-----", "")#.gsub("\n", "")
       encrypted = Base64.decode64(cleaned_data)
 
       if encrypted.length < SALT_LENGTH + MAC_LENGTH
         # error
       end
 
-      salt = encrypted[0..SALT_LENGTH]
+      salt = encrypted[0..SALT_LENGTH - 1]
       ciphertext = encrypted[SALT_LENGTH..-MAC_LENGTH]
-      expected_mac = encrypted[-MAC_LENGTH..-1]
+      expected_mac = encrypted[-MAC_LENGTH..-1] # size of data is important here
 
-      key_digest = blinded_key + subcredential + [revision_counter].pack("v") + salt + constant
+      # key_digest = blinded_key + subcredential + [revision_counter].pack("Q>") + salt + constant
+      key_digest = blinded_key + subcredential + [revision_counter].pack(">Q") + salt + constant
+      # key_digest = blinded_key + subcredential + [revision_counter].pack("v") + salt + constant
       # key_derivation_function = OpenSSL::Digest.new("SHAKE256", key_digest)
-      key_derivation_function = OpenSSL::Digest.digest("SHAKE256", key_digest)
+      # key_derivation_function = OpenSSL::Digest.digest("SHAKE256", key_digest)
       # keys = key_derivation_function.digest("#{S_KEY_LENGTH + S_IV_LENGTH + MAC_LENGTH}")
+      bit_length = (S_KEY_LENGTH + S_IV_LENGTH + MAC_LENGTH) * 8
+      keys = Shake256.new(bit_length: bit_length).digest(key_digest)
 
-      # SHA3
-      # SHAKE256 - NOT a Digest algorithm. Variable output. See how key generation / decryption is done
-      # todo - review JS implementation library, use that here
+      secret_key = keys[0..S_KEY_LENGTH - 1]
+      secret_iv = keys[S_KEY_LENGTH..S_KEY_LENGTH + S_IV_LENGTH - 1]
+      mac_key = keys[S_KEY_LENGTH - 1 + S_IV_LENGTH..-1]
 
-      secret_key = keys[0..S_KEY_LENGTH]
-      secret_iv = keys[S_KEY_LENGTH..S_KEY_LENGTH + S_IV_LENGTH]
-      mac_key = keys[S_KEY_LENGTH + S_IV_LENGTH..-1]
+      # mac_prefix = [mac_key.length].pack("v") + mac_key + [salt.length].pack("v") + salt
+      mac_prefix = [mac_key.length].pack("Q>") + mac_key + [salt.length].pack("Q>") + salt
+      mac_for = OpenSSL::Digest.digest("SHA3-256", mac_prefix + ciphertext)
 
+      if expected_mac != mac_for
+        # error
+      end
+
+      decipher = OpenSSL::Cipher.new("aes-256-ctr")
+      decipher.decrypt
+      decipher.key = secret_key
+      decipher.iv = secret_iv
+      # plain = decipher.update(encrypted) + decipher.final
       binding.pry
+      # puts plain
+
     end
   end
 end

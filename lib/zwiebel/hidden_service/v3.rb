@@ -27,7 +27,7 @@ module Zwiebel
         blinded_key = descriptor.signing_key
         identity_public_key = Zwiebel.v3_address_pubkey(onion_address)
         subcredential = descriptor.subcredential(identity_public_key)
-      binding.pry
+      # binding.pry
         decrypted_outer_layer = Utilities.decrypt_layer(
           encrypted_data: descriptor.superencrypted,
           constant: "hsdir-superencrypted-data",
