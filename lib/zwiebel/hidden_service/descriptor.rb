@@ -17,10 +17,11 @@ module Zwiebel
   module HiddenService
     class Descriptor
       FIELDS = %w(hs-descriptor descriptor-lifetime descriptor-signing-key-cert revision-counter superencrypted signature).freeze
-      attr_accessor :string
+      attr_accessor :certificate, :string
       def initialize(string:)
         @string = string
         parse
+        @certificate = Ed25519Certificate.new(descriptor_data: descriptor_signing_key_cert)
       end
 
       def parse
@@ -72,9 +73,9 @@ module Zwiebel
         @hs_descriptor["signature"]
       end
 
-      def signing_key
-        Utilities.ed25519_certificate(descriptor_signing_key_cert)
-      end
+      # def signing_key
+      #   Utilities.ed25519_certificate(descriptor_signing_key_cert)
+      # end
 
       def subcredential(identity_public_key)
         credential = OpenSSL::Digest.digest("SHA3-256", "credential#{identity_public_key}")

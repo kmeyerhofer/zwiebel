@@ -17,6 +17,7 @@ module Zwiebel
   module HiddenService
     class OuterLayer
       attr_accessor :decrypted_data
+
       def initialize(decrypted_data:)
         @decrypted_data = decrypted_data
         parse
