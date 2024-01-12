@@ -19,7 +19,7 @@ module Zwiebel
     HEADER_LENGTH = 40
     SIGNATURE_LENGTH = 64
 
-    attr_accessor :cert_type, :descriptor_data, :expiration_hours, :key, :signature, :version
+    attr_accessor :cert_type, :descriptor_data, :extension_data, :expiration_hours, :expires, :key, :signature, :version
 
     def initialize(descriptor_data:)
       @descriptor_data = descriptor_data
@@ -34,8 +34,8 @@ module Zwiebel
         # error
       end
 
+      @signature = base64_decoded.byteslice((base64_decoded.length - SIGNATURE_LENGTH)..-1)
       index = 0
-      @signature = base64_decoded.byteslice((base64_decoded.length - SIGNATURE_LENGTH + 1)..-1)
       version = base64_decoded.byteslice(index, 1)
       index += 1
       cert_type = base64_decoded.byteslice(index, 1)
@@ -47,12 +47,13 @@ module Zwiebel
       @key = base64_decoded.byteslice(index, KEY_LENGTH)
       index += KEY_LENGTH
       extension_count = base64_decoded.byteslice(index, 1)
-      index += 1
-      extension_data = base64_decoded.byteslice(index..-SIGNATURE_LENGTH)
+      index += 5
+      @extension_data = base64_decoded.byteslice(index..-(SIGNATURE_LENGTH + 1))
 
       @version = version.unpack("C")[0]
       @cert_type = cert_type.unpack("C")[0]
       @expiration_hours = expiration_hours.unpack("L>")[0] * 3600
+      @expires = Time.at(@expiration_hours).getutc
     end
 
     def signing_key
