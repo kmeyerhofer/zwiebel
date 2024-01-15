@@ -16,6 +16,23 @@
 module Zwiebel
   module HiddenService
     class IntroductionPoint
+      attr_accessor :auth_key_ed25519, :enc_key_cert_ed25519
+
+      def initialize(data:)
+        @id              = data["introduction-point"]
+        @onion_key       = data["onion_key"]
+        @auth_key        = data["auth-key"]
+        @enc_key         = data["enc-key"]
+        @enc_key_cert    = data["enc-key-cert"]
+        @legacy_key      = data["legacy-key"]
+        @legacy_key_cert = data["legacy-key-cert"]
+        store_keys
+      end
+
+      def store_keys
+        @auth_key_ed25519 = Ed25519Certificate.new(descriptor_data: @auth_key) unless @auth_key.nil?
+        @enc_key_cert_ed25519 = Ed25519Certificate.new(descriptor_data: @enc_key_cert) unless @enc_key_cert.nil?
+      end
 
     end
   end

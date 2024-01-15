@@ -22,19 +22,32 @@ module Zwiebel
       def initialize(decrypted_data:)
         @decrypted_data = decrypted_data
         parse
-        # decrypt
       end
 
       def parse
-        # Store in hash
         @outer_layer = {}
         layer_current_field = nil
         decrypted_data.gsub("\x00", "").each_line do |line|
           line_field = line.split(" ")[0]
           if FIELDS.include?(line_field)
             layer_current_field = line_field
-
-            if @outer_layer[layer_current_field].nil? && !line.split(" ")[1..-1].nil?
+            if layer_current_field == "auth-client"
+              if !@outer_layer[layer_current_field].nil?
+                _, client_id, iv, cookie = line.split(" ")
+                @outer_layer[layer_current_field].push({
+                  client_id: client_id,
+                  iv: iv,
+                  cookie: cookie
+                })
+              else
+                _, client_id, iv, cookie = line.split(" ")
+                @outer_layer[layer_current_field] = [{
+                  client_id: client_id,
+                  iv: iv,
+                  cookie: cookie
+                }]
+              end
+            elsif @outer_layer[layer_current_field].nil? && !line.split(" ")[1..-1].nil?
               @outer_layer[layer_current_field] = line.split(" ")[1..-1].join(" ")
             elsif !@outer_layer[layer_current_field].nil? && !line.split(" ")[1..-1].nil?
               @outer_layer[layer_current_field] += line.split(" ")[1..-1].join(" ")
@@ -50,8 +63,6 @@ module Zwiebel
             end
           end
         end
-
-        # binding.pry
       end
 
       def desc_auth_type
@@ -62,7 +73,7 @@ module Zwiebel
         @outer_layer["desc-auth-ephemeral-key"]
       end
 
-      def auth_client
+      def auth_clients
         @outer_layer["auth-client"]
       end
 

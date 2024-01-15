@@ -24,7 +24,6 @@ module Zwiebel
       end
 
       def decrypt
-        # blinded_key = descriptor.signing_key
         blinded_key = descriptor.certificate.signing_key
         identity_public_key = Zwiebel.v3_address_pubkey(onion_address)
         subcredential = descriptor.subcredential(identity_public_key)

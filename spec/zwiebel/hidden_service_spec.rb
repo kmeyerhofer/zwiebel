@@ -18,9 +18,14 @@ RSpec.describe "Hidden Service" do
     descriptor_file = File.open("#{RSPEC_DIR}/support/files/hidden_service_v3")
     hidden_service_v3 = Zwiebel::HiddenService::V3.new(descriptor_string: descriptor_file.read, onion_address: onion_address)
     hidden_service_v3.decrypt
-    # descriptor = Zwiebel::HiddenService::Descriptor.new(string: descriptor_file.read)
 
-    # outer_layer = Zwiebel::HiddenService::OuterLayer.new(descriptor: descriptor, onion_address: onion_address)
+    expect(hidden_service_v3.outer_layer.desc_auth_type).to eq "x25519"
+    expect(hidden_service_v3.outer_layer.desc_auth_ephemeral_key).to eq "WjZCU9sV1oxkxaPcd7/YozeZgq0lEs6DhWyrdYRNJR4="
+    expect(hidden_service_v3.outer_layer.encrypted).to include("BsRYMH/No+LgetIFv")
 
+    client = hidden_service_v3.outer_layer.auth_clients.select { |client| client[:client_id] == "123DLzKnp1o" }[0]
+    expect(client[:client_id]).to eq "123DLzKnp1o"
+    expect(client[:iv]).to eq "qXnA7lMIpODNEUq8pAx8dg"
+    expect(client[:cookie]).to eq "8QxEi+efrh73U9HlV+wY+g"
   end
 end
