@@ -38,7 +38,7 @@ module Zwiebel
     # end
 
     def self.decrypt_layer(encrypted_data:, constant:, revision_counter:, subcredential:, blinded_key:)
-      cleaned_data = encrypted_data.gsub("-----BEGIN MESSAGE-----\n", "").gsub("\n-----END MESSAGE-----", "")#.gsub("\n", "")
+      cleaned_data = encrypted_data.gsub("-----BEGIN MESSAGE-----\n", "").gsub("\n-----END MESSAGE-----", "")
       encrypted = Base64.decode64(cleaned_data)
 
       if encrypted.length < SALT_LENGTH + MAC_LENGTH
@@ -46,24 +46,19 @@ module Zwiebel
       end
 
       salt = encrypted.byteslice(0, SALT_LENGTH)
-      ciphertext = encrypted.byteslice(SALT_LENGTH..-MAC_LENGTH)
-      expected_mac = encrypted.byteslice(-MAC_LENGTH..-1) # size of data is important here
+      ciphertext = encrypted.byteslice(SALT_LENGTH..-(MAC_LENGTH + 1))
+      expected_mac = encrypted.byteslice(-MAC_LENGTH..-1)
 
       key_digest = blinded_key + subcredential + [revision_counter].pack("Q>") + salt + constant
-      # key_digest = blinded_key + subcredential + [revision_counter].pack(">Q") + salt + constant
-      # key_digest = blinded_key + subcredential + [revision_counter].pack("v") + salt + constant
-      # key_derivation_function = OpenSSL::Digest.new("SHAKE256", key_digest)
-      # key_derivation_function = OpenSSL::Digest.digest("SHAKE256", key_digest)
-      # keys = key_derivation_function.digest("#{S_KEY_LENGTH + S_IV_LENGTH + MAC_LENGTH}")
       bit_length = (S_KEY_LENGTH + S_IV_LENGTH + MAC_LENGTH) * 8
-      keys = Shake256.new(bit_length: bit_length).digest(key_digest)
+
+      keys = Shake256.new(bit_length: bit_length, message_type: "hex").hexdigest(key_digest.unpack1("H*"))
       keys = [keys].pack("H*")
 
-      secret_key = keys.byteslice(0, S_KEY_LENGTH) #[0..S_KEY_LENGTH - 1]
-      secret_iv = keys.byteslice(S_KEY_LENGTH, S_IV_LENGTH) #[S_KEY_LENGTH..S_KEY_LENGTH + S_IV_LENGTH - 1]
-      mac_key = keys.byteslice(S_KEY_LENGTH + S_IV_LENGTH, MAC_LENGTH) #[-MAC_LENGTH..-1]
+      secret_key = keys.byteslice(0, S_KEY_LENGTH)
+      secret_iv = keys.byteslice(S_KEY_LENGTH, S_IV_LENGTH)
+      mac_key = keys.byteslice(S_KEY_LENGTH + S_IV_LENGTH, MAC_LENGTH)
 
-      # mac_prefix = [mac_key.length].pack("v") + mac_key + [salt.length].pack("v") + salt
       mac_prefix = [mac_key.length].pack("Q>") + mac_key + [salt.length].pack("Q>") + salt
       mac_for = OpenSSL::Digest.digest("SHA3-256", mac_prefix + ciphertext)
 
@@ -73,12 +68,9 @@ module Zwiebel
 
       decipher = OpenSSL::Cipher.new("aes-256-ctr")
       decipher.decrypt
-      binding.pry
       decipher.key = secret_key
       decipher.iv = secret_iv
-      # plain = decipher.update(encrypted) + decipher.final
-      # puts plain
-
+      decipher.update(ciphertext) + decipher.final
     end
   end
 end

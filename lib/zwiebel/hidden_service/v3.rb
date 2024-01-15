@@ -28,15 +28,15 @@ module Zwiebel
         blinded_key = descriptor.certificate.signing_key
         identity_public_key = Zwiebel.v3_address_pubkey(onion_address)
         subcredential = descriptor.subcredential(identity_public_key)
-      # binding.pry
         decrypted_outer_layer = Utilities.decrypt_layer(
           encrypted_data: descriptor.superencrypted,
           constant: "hsdir-superencrypted-data",
           revision_counter: descriptor.revision_counter,
           subcredential: subcredential,
           blinded_key: blinded_key
-        )
+          )
         @outer_layer = OuterLayer.new(decrypted_data: decrypted_outer_layer)
+          # binding.pry
         decrypted_inner_layer = Utilities.decrypt_layer(
           encrypted_data: outer_layer.data, # change method name
           constant: "hsdir-encrypted-data",

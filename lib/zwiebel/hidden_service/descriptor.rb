@@ -78,8 +78,13 @@ module Zwiebel
       # end
 
       def subcredential(identity_public_key)
-        credential = OpenSSL::Digest.digest("SHA3-256", "credential#{identity_public_key}")
-        OpenSSL::Digest.digest("SHA3-256", "subcredential#{credential}#{descriptor_signing_key_cert}")
+        # key_bytes = [identity_public_key].pack("H*")
+        # binding.pry
+        # credential = OpenSSL::Digest.digest("SHA3-256", "credential" + key_bytes)
+        credential = OpenSSL::Digest.digest("SHA3-256", "credential" + identity_public_key)
+        # credential = OpenSSL::Digest.digest("SHA3-256", "credential#{key_bytes}")
+
+        OpenSSL::Digest.digest("SHA3-256", "subcredential" + credential + certificate.signing_key)
       end
     end
   end

@@ -21,8 +21,8 @@ RSpec.describe Zwiebel::Ed25519Certificate do
     expect(certificate.expired?).to eq true
     expect(certificate.version).to eq 1
     expect(certificate.cert_type).to eq 4
-    expect(certificate.key.unpack("H*")[0]).to eq expected_cert_key_hex
-    expect(certificate.signature.unpack("H*")[0]).to eq expected_signature_hex
-    expect(certificate.extension_data.unpack("H*")[0]).to eq expected_extension_data_hex
+    expect(certificate.key.unpack1("H*")).to eq expected_cert_key_hex
+    expect(certificate.signature.unpack1("H*")).to eq expected_signature_hex
+    expect(certificate.extension_data.unpack1("H*")).to eq expected_extension_data_hex
   end
 end

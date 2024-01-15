@@ -23,7 +23,7 @@ RSpec.describe "Zwiebel" do
     it "valid" do
       key_bytes = Zwiebel.v3_address_pubkey("sltib6sxkuxh2scmtuvd5w2g7pahnzkovefxpo4e4ptnkzl5kkq5h2ad.onion")
 
-      hex_string = key_bytes.unpack("H*")[0]
+      hex_string = key_bytes.unpack1("H*")
       expect(hex_string).to eq "92e680fa57552e7d484c9d2a3edb46fbc076e54ea90b77bb84e3e6d5657d52a1"
     end
 

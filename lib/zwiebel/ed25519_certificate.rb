@@ -27,13 +27,12 @@ module Zwiebel
     end
 
     def unpack
-      content = descriptor_data.gsub("-----BEGIN ED25519 CERT-----\n", "").gsub("\n-----END ED25519 CERT-----", "")
+      content = descriptor_data.gsub("-----BEGIN ED25519 CERT-----\n", "").gsub("\n-----END ED25519 CERT-----", "").gsub("\n", "")
       base64_decoded = Base64.decode64(content)
 
       if base64_decoded.length < HEADER_LENGTH + SIGNATURE_LENGTH
         # error
       end
-
       @signature = base64_decoded.byteslice((base64_decoded.length - SIGNATURE_LENGTH)..-1)
       index = 0
       version = base64_decoded.byteslice(index, 1)
@@ -43,16 +42,17 @@ module Zwiebel
       expiration_hours = base64_decoded.byteslice(index, 4)
       index += 4
       key_type = base64_decoded.byteslice(index, 1)
-      index += 1
+      index += 38
       @key = base64_decoded.byteslice(index, KEY_LENGTH)
       index += KEY_LENGTH
       extension_count = base64_decoded.byteslice(index, 1)
       index += 5
       @extension_data = base64_decoded.byteslice(index..-(SIGNATURE_LENGTH + 1))
+      # binding.pry
 
-      @version = version.unpack("C")[0]
-      @cert_type = cert_type.unpack("C")[0]
-      @expiration_hours = expiration_hours.unpack("L>")[0] * 3600
+      @version = version.unpack1("C")
+      @cert_type = cert_type.unpack1("C")
+      @expiration_hours = expiration_hours.unpack1("L>") * 3600
       @expires = Time.at(@expiration_hours).getutc
     end
 

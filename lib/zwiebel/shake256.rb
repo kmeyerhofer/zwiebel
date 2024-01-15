@@ -15,7 +15,7 @@
 
 module Zwiebel
   class Shake256
-    HEX_CHARS = '0123456789abcdef'
+    HEX_CHARS = '0123456789abcdef'.freeze
     PADDING = [31, 7936, 2031616, 520093696].freeze
     SHIFT = [0, 8, 16, 24].freeze
     RC = [
@@ -26,8 +26,9 @@ module Zwiebel
       2147516545, 2147483648, 32896, 2147483648, 2147483649, 0, 2147516424, 2147483648
     ].freeze
 
-    def initialize(bit_length:)
+    def initialize(bit_length:, message_type: "string")
       @bit_length = bit_length
+      @message_type = message_type
       @finalized = false
       @reset = true
       @block = 0
@@ -40,47 +41,58 @@ module Zwiebel
       @blocks = Array.new(@block_count, 0)
     end
 
-    def digest(data)
+    def hexdigest(data)
       return if data.nil?
-      length = data.length
+      if @message_type == "string"
+        data_codes = data.bytes
+        length = data.length
+      else
+        data_codes = [data].pack("H*").bytes
+        length = data_codes.length
+      end
+
       index = 0
       i = nil
-      data_codes = data.codepoints
       while index < length
         if @reset
           @reset = false
           @blocks[0] = @block
-          1.upto(@block_count+1) do |x|
+          1.upto(@block_count + 1) do |x|
             @blocks[x] = 0
           end
         end
         i = @start
         while index < length && i < @byte_count
           code = data_codes[index]
-          if code < 0x80
-            @blocks[i >> 2] |= code << SHIFT[i & 3]
-            i += 1
-          elsif code < 0x800
-            @blocks[i >> 2] |= (0xc0 | (code >> 6)) << SHIFT[i & 3]
-            i += 1
-            @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
-            i += 1
-          elsif code < 0xd800 || code >= 0xe000
-            @blocks[i >> 2] |= (0xe0 | (code >> 12)) << SHIFT[i & 3]
-            i += 1
-            @blocks[i >> 2] |= (0x80 | ((code >> 6) & 0x3f)) << SHIFT[i & 3]
-            i += 1
-            @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
-            i += 1
+          if @message_type == "string"
+            if code < 0x80
+              @blocks[i >> 2] |= code << SHIFT[i & 3]
+              i += 1
+            elsif code < 0x800
+              @blocks[i >> 2] |= (0xc0 | (code >> 6)) << SHIFT[i & 3]
+              i += 1
+              @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
+              i += 1
+            elsif code < 0xd800 || code >= 0xe000
+              @blocks[i >> 2] |= (0xe0 | (code >> 12)) << SHIFT[i & 3]
+              i += 1
+              @blocks[i >> 2] |= (0x80 | ((code >> 6) & 0x3f)) << SHIFT[i & 3]
+              i += 1
+              @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
+              i += 1
+            else
+              code = 0x10000 + (((code & 0x3ff) << 10) | (data_codes[index += 1] & 0x3ff))
+              @blocks[i >> 2] |= (0xf0 | (code >> 18)) << SHIFT[i & 3]
+              i += 1
+              @blocks[i >> 2] |= (0x80 | ((code >> 12) & 0x3f)) << SHIFT[i & 3]
+              i += 1
+              @blocks[i >> 2] |= (0x80 | ((code >> 6) & 0x3f)) << SHIFT[i & 3]
+              i += 1
+              @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
+              i += 1
+            end
           else
-            code = 0x10000 + (((code & 0x3ff) << 10) | (data_codes[index += 1] & 0x3ff))
-            @blocks[i >> 2] |= (0xf0 | (code >> 18)) << SHIFT[i & 3]
-            i += 1
-            @blocks[i >> 2] |= (0x80 | ((code >> 12) & 0x3f)) << SHIFT[i & 3]
-            i += 1
-            @blocks[i >> 2] |= (0x80 | ((code >> 6) & 0x3f)) << SHIFT[i & 3]
-            i += 1
-            @blocks[i >> 2] |= (0x80 | (code & 0x3f)) << SHIFT[i & 3]
+            @blocks[i >> 2] |= code << SHIFT[i & 3]
             i += 1
           end
           index += 1

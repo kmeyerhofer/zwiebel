@@ -69,7 +69,7 @@ module Zwiebel
       raise StandardError "not permitted to read cookie file"
     else
       data = IO.binread(file_path)
-      data.unpack("H*")[0]
+      data.unpack1("H*")
     end
   end
 end
