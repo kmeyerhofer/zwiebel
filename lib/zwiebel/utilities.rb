@@ -30,13 +30,6 @@ module Zwiebel
       (current_time / 60 - 1440) / 1440
     end
 
-    # def self.ed25519_certificate(cert)
-    #   # cert_signing_key = cert.gsub("-----BEGIN ED25519 CERT-----", "").gsub("-----END ED25519 CERT-----", "").gsub("\n", "")
-    #   cert_signing_key = cert.gsub("-----BEGIN ED25519 CERT-----\n", "").gsub("\n-----END ED25519 CERT-----", "")#.gsub("\n", "")
-    #   # TODO fix this implementation
-    #   Base64.decode64(cert_signing_key)
-    # end
-
     def self.decrypt_layer(encrypted_data:, constant:, revision_counter:, subcredential:, blinded_key:)
       cleaned_data = encrypted_data.gsub("-----BEGIN MESSAGE-----\n", "").gsub("\n-----END MESSAGE-----", "")
       encrypted = Base64.decode64(cleaned_data)

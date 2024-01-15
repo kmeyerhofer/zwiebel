@@ -34,17 +34,16 @@ module Zwiebel
           revision_counter: descriptor.revision_counter,
           subcredential: subcredential,
           blinded_key: blinded_key
-          )
+        )
         @outer_layer = OuterLayer.new(decrypted_data: decrypted_outer_layer)
-          # binding.pry
         decrypted_inner_layer = Utilities.decrypt_layer(
-          encrypted_data: outer_layer.data, # change method name
+          encrypted_data: outer_layer.encrypted,
           constant: "hsdir-encrypted-data",
           revision_counter: descriptor.revision_counter,
           subcredential: subcredential,
           blinded_key: blinded_key
         )
-        # @inner_layer = InnerLayer.new(decrypted_data: decrypted_inner_layer)
+        @inner_layer = InnerLayer.new(decrypted_data: decrypted_inner_layer)
       end
 
     end
