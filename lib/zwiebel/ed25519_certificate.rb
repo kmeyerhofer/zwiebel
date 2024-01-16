@@ -48,7 +48,6 @@ module Zwiebel
       extension_count = base64_decoded.byteslice(index, 1)
       index += 5
       @extension_data = base64_decoded.byteslice(index..-(SIGNATURE_LENGTH + 1))
-      # binding.pry
 
       @version = version.unpack1("C")
       @cert_type = cert_type.unpack1("C")

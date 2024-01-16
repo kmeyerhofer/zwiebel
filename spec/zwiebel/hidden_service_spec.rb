@@ -19,6 +19,7 @@ RSpec.describe "Hidden Service" do
     hidden_service_v3 = Zwiebel::HiddenService::V3.new(descriptor_string: descriptor_file.read, onion_address: onion_address)
     hidden_service_v3.decrypt
 
+    # Outer layer
     expect(hidden_service_v3.outer_layer.desc_auth_type).to eq "x25519"
     expect(hidden_service_v3.outer_layer.desc_auth_ephemeral_key).to eq "WjZCU9sV1oxkxaPcd7/YozeZgq0lEs6DhWyrdYRNJR4="
     expect(hidden_service_v3.outer_layer.encrypted).to include("BsRYMH/No+LgetIFv")
@@ -27,5 +28,21 @@ RSpec.describe "Hidden Service" do
     expect(client[:client_id]).to eq "123DLzKnp1o"
     expect(client[:iv]).to eq "qXnA7lMIpODNEUq8pAx8dg"
     expect(client[:cookie]).to eq "8QxEi+efrh73U9HlV+wY+g"
+
+    # Inner layer
+    expect(hidden_service_v3.inner_layer.create2_formats).to eq 2
+    expect(hidden_service_v3.inner_layer.intro_auth_required).to eq "ed25519"
+    expect(hidden_service_v3.inner_layer.introduction_points.length).to eq 4
+    expect(hidden_service_v3.inner_layer.single_onion_service?).to eq true
+
+    introduction_point = hidden_service_v3.inner_layer.introduction_points[0]
+
+    expect(introduction_point.onion_key).to eq "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    expect(introduction_point.enc_key).to eq "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
+    expect(introduction_point.link_specifiers.length).to eq 2
+    expect(introduction_point.link_specifiers.first.fingerprint).to eq "CCCCCCCCCCCCCCCCCCCC"
+    expect(introduction_point.link_specifiers[1].address).to eq "1.2.3.4"
+    expect(introduction_point.link_specifiers[1].port).to eq 9001
   end
 end

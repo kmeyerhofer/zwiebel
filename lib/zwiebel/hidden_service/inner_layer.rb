@@ -36,17 +36,15 @@ module Zwiebel
           if FIELDS.include?(line_field)
             layer_current_field = line_field
             if layer_current_field == "introduction-point"
-              if current_introduction_point_data.nil?
-                current_introduction_point_data = { layer_current_field => line.split(" ")[1] }
-              else
-                introduction_points.push(IntroductionPoint.new(data: current_introduction_point_data))
-                current_introduction_point_data = { layer_current_field => line.split(" ")[1] }
-              end
+              introduction_points.push(IntroductionPoint.new(data: current_introduction_point_data)) unless current_introduction_point_data.nil?
+              current_introduction_point_data = { layer_current_field => line.split(" ")[1] }
             else
               if @inner_layer[layer_current_field].nil? && !line.split(" ")[1..-1].nil?
                 @inner_layer[layer_current_field] = line.split(" ")[1..-1].join(" ")
               elsif !@inner_layer[layer_current_field].nil? && !line.split(" ")[1..-1].nil?
                 @inner_layer[layer_current_field] += line.split(" ")[1..-1].join(" ")
+              elsif layer_current_field == "single-onion-service"
+                @inner_layer[layer_current_field] = true
               else
                 @inner_layer[layer_current_field] = ""
               end
@@ -60,18 +58,23 @@ module Zwiebel
             end
           end
         end
+        introduction_points.push(IntroductionPoint.new(data: current_introduction_point_data)) unless current_introduction_point_data.nil?
       end
 
       def create2_formats
-        @outer_layer["create2-formats"]
+        @inner_layer["create2-formats"].to_i
       end
 
       def intro_auth_required
-        @outer_layer["intro-auth-required"]
+        @inner_layer["intro-auth-required"]
+      end
+
+      def single_onion_service?
+        !!@inner_layer["single-onion-service"]
       end
 
       def encrypted
-        @outer_layer["encrypted"]
+        @inner_layer["encrypted"]
       end
     end
   end
