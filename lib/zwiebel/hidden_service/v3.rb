@@ -44,7 +44,6 @@ module Zwiebel
         )
         @inner_layer = InnerLayer.new(decrypted_data: decrypted_inner_layer)
       end
-
     end
   end
 end

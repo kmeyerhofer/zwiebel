@@ -356,6 +356,5 @@ module Zwiebel
       mask = (1 << (32 - amount)) - 1
       (val >> amount) & mask
     end
-
   end
 end

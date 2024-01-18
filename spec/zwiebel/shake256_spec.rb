@@ -28,7 +28,6 @@ RSpec.describe Zwiebel::Shake256 do
 
   it "hexdigest example" do
     message = "548697defd6777a7f33be03a61b0670831e7bf9e943d053ce4cc2c93c959836f25501477410d52b310ab77dfc1905ff11d56618a868d01c2288629cb8f5fa992000000000000002a266bbae965e7d3e0832d754cd369fce668736469722d7375706572656e637279707465642d64617461"
-    # result = described_class.new(bit_length: 640).hexdigest(message)
     result = described_class.new(bit_length: 640, message_type: "hex").hexdigest(message)
     expect(result).to eq "6f963da1e629a5c822d4048aa62b3f419fec4016895b7f9c7dc8427f5799e7fd517feddef553f7246eac7bebb9630c11d037d60fc14a3a534042e8d2fe89eb484025e3d7bc1a20c7548a62efcba74325"
   end

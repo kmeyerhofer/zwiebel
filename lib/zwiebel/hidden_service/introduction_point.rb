@@ -82,11 +82,7 @@ module Zwiebel
             )
           end
         end
-
       end
-
-
-
     end
   end
 end
