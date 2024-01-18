@@ -5,11 +5,11 @@ RSpec.describe "Zwiebel::Utilities" do
     context "invalid" do
       it "too short data" do
         bytes = SecureRandom.bytes(20)
-        message = <<~CERT
+        message = <<~DATA
           -----BEGIN MESSAGE-----
           #{Base64.encode64(bytes)}
           -----END MESSAGE-----
-        CERT
+        DATA
 
         expect {
           Zwiebel::Utilities.decrypt_layer(
@@ -24,11 +24,11 @@ RSpec.describe "Zwiebel::Utilities" do
 
       it "incorrect message authentication code" do
         bytes = SecureRandom.bytes(48)
-        message = <<~CERT
+        message = <<~DATA
           -----BEGIN MESSAGE-----
           #{Base64.encode64(bytes)}
           -----END MESSAGE-----
-        CERT
+        DATA
 
         expect {
           Zwiebel::Utilities.decrypt_layer(
