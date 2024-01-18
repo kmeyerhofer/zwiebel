@@ -34,6 +34,7 @@ tor.quit
 ```
 
 ### Tor utility
+
 ```ruby
 # V3 address checksum verification
 onion_address = "qubesosfasa4zl44o4tws22di6kepyzfeqv3tg4e3ztknltfxqrymdad.onion"
@@ -44,7 +45,6 @@ end
 # read Tor auth cookie
 cookie_hash = Zwiebel.cookie_file_hash(file_path: "/run/tor/control.authcookie")
 ```
-
 
 ## Development
 
