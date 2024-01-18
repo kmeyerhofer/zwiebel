@@ -32,7 +32,7 @@ module Zwiebel
       base64_decoded = Base64.decode64(content)
 
       if base64_decoded.length < HEADER_LENGTH + SIGNATURE_LENGTH
-        # error
+        raise ContentLengthError "certificate should be at least #{HEADER_LENGTH + SIGNATURE_LENGTH} bytes"
       end
       @signature = base64_decoded.byteslice((base64_decoded.length - SIGNATURE_LENGTH)..-1)
       index = 0

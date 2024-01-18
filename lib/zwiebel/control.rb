@@ -77,9 +77,5 @@ module Zwiebel
     def read_reply
       @socket.readline.chomp
     end
-
-    def read_whole_reply
-      @socket.read(1000)
-    end
   end
 end

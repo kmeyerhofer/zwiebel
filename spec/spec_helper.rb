@@ -1,4 +1,7 @@
 require "pry"
+require "securerandom"
+require "tempfile"
+
 require "zwiebel"
 require_relative "support/tor_tcp_server"
 

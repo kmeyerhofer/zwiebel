@@ -34,7 +34,7 @@ module Zwiebel
       encrypted = Base64.decode64(cleaned_data)
 
       if encrypted.length < SALT_LENGTH + MAC_LENGTH
-        # error
+        raise ContentLengthError, "encrypted data should be at least #{SALT_LENGTH + MAC_LENGTH} bytes"
       end
 
       salt = encrypted.byteslice(0, SALT_LENGTH)
@@ -55,7 +55,7 @@ module Zwiebel
       mac_for = OpenSSL::Digest.digest("SHA3-256", mac_prefix + ciphertext)
 
       if expected_mac != mac_for
-        # error
+        raise DataError, "incorrect message authentication code"
       end
 
       decipher = OpenSSL::Cipher.new("aes-256-ctr")

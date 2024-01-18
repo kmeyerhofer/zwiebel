@@ -21,6 +21,7 @@ require_relative "zwiebel/hidden_service/inner_layer"
 require_relative "zwiebel/hidden_service/introduction_point"
 require_relative "zwiebel/control"
 require_relative "zwiebel/ed25519_certificate"
+require_relative "zwiebel/errors"
 require_relative "zwiebel/shake256"
 require_relative "zwiebel/utilities"
 require_relative "zwiebel/version"
@@ -56,7 +57,7 @@ module Zwiebel
   end
 
   def self.v3_address_pubkey(address)
-    raise ::StandardError.new("address invalid") unless v3_address_valid?(address)
+    raise DataError, "address invalid" unless v3_address_valid?(address)
 
     decoded_address = Base32.decode(address.gsub(".onion", "").upcase)
     decoded_address.byteslice(0, 32)
@@ -64,9 +65,9 @@ module Zwiebel
 
   def self.cookie_file_hash(file_path:)
     if !File.exist?(file_path)
-      raise StandardError "cookie file not present"
+      raise FileReadError, "cookie file not present"
     elsif !File.readable?(file_path)
-      raise StandardError "not permitted to read cookie file"
+      raise FileReadError, "not permitted to read cookie file"
     else
       data = IO.binread(file_path)
       data.unpack1("H*")
