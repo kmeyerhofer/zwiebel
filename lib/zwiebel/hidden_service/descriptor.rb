@@ -73,17 +73,8 @@ module Zwiebel
         @hs_descriptor["signature"]
       end
 
-      # def signing_key
-      #   Utilities.ed25519_certificate(descriptor_signing_key_cert)
-      # end
-
       def subcredential(identity_public_key)
-        # key_bytes = [identity_public_key].pack("H*")
-        # binding.pry
-        # credential = OpenSSL::Digest.digest("SHA3-256", "credential" + key_bytes)
         credential = OpenSSL::Digest.digest("SHA3-256", "credential" + identity_public_key)
-        # credential = OpenSSL::Digest.digest("SHA3-256", "credential#{key_bytes}")
-
         OpenSSL::Digest.digest("SHA3-256", "subcredential" + credential + certificate.signing_key)
       end
     end
