@@ -14,7 +14,6 @@
 # If not, see <https://www.gnu.org/licenses/>.
 
 require "base64"
-require "ed25519"
 
 module Zwiebel
   class Utilities
