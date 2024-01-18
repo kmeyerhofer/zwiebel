@@ -19,15 +19,16 @@ module Zwiebel
     HEADER_LENGTH = 40
     SIGNATURE_LENGTH = 64
 
-    attr_accessor :cert_type, :descriptor_data, :extension_data, :expiration_hours, :expires, :key, :signature, :version
+    attr_accessor :cert_type, :descriptor_data, :extension_data_with_header, :extensions, :expiration_hours, :expires, :key, :signature, :version
 
     def initialize(descriptor_data:)
       @descriptor_data = descriptor_data
+      @extensions = []
       unpack
     end
 
     def unpack
-      content = descriptor_data.gsub("-----BEGIN ED25519 CERT-----\n", "").gsub("\n-----END ED25519 CERT-----", "").gsub("\n", "")
+      content = descriptor_data.gsub("-----BEGIN ED25519 CERT-----\n", "").gsub("\n-----END ED25519 CERT-----", "")
       base64_decoded = Base64.decode64(content)
 
       if base64_decoded.length < HEADER_LENGTH + SIGNATURE_LENGTH
@@ -35,28 +36,48 @@ module Zwiebel
       end
       @signature = base64_decoded.byteslice((base64_decoded.length - SIGNATURE_LENGTH)..-1)
       index = 0
-      version = base64_decoded.byteslice(index, 1)
+      @version = base64_decoded.byteslice(index, 1).unpack1("C")
       index += 1
-      cert_type = base64_decoded.byteslice(index, 1)
+      @cert_type = base64_decoded.byteslice(index, 1).unpack1("C")
       index += 1
-      expiration_hours = base64_decoded.byteslice(index, 4)
+      @expiration_hours = base64_decoded.byteslice(index, 4).unpack1("L>") * 3600
       index += 4
       key_type = base64_decoded.byteslice(index, 1)
-      index += 38
+      index += 1
       @key = base64_decoded.byteslice(index, KEY_LENGTH)
       index += KEY_LENGTH
       extension_count = base64_decoded.byteslice(index, 1)
-      index += 5
-      @extension_data = base64_decoded.byteslice(index..-(SIGNATURE_LENGTH + 1))
-
-      @version = version.unpack1("C")
-      @cert_type = cert_type.unpack1("C")
-      @expiration_hours = expiration_hours.unpack1("L>") * 3600
+      index += 1
+      @extension_data_with_header = base64_decoded.byteslice(index..-(SIGNATURE_LENGTH + 1))
       @expires = Time.at(@expiration_hours).getutc
+
+      index = 0
+      extension_count.unpack1("C").times do
+        data_size = extension_data_with_header.byteslice(index, 2).unpack1("S>*")
+        index += 2
+        extension_type = extension_data_with_header.byteslice(index, 1).unpack1("C")
+        index += 1
+        flags = extension_data_with_header.byteslice(index, 1).unpack1("C")
+        index += 1
+        data = extension_data_with_header.byteslice(index, data_size)
+        index += data_size
+        extensions.push(OpenStruct.new(
+          extension_type: extension_type,
+          flags: flags,
+          data: data,
+        ))
+      end
+    end
+
+    def extension_data
+      extension_data_with_header.byteslice(4..-1)
     end
 
     def signing_key
-      @key
+      k = extensions.select do |extension|
+        extension.extension_type == 4
+      end.first
+      k&.data
     end
 
     def expired?
