@@ -25,4 +25,19 @@ RSpec.describe Zwiebel::Ed25519Certificate do
     expect(certificate.signature.unpack1("H*")).to eq expected_signature_hex
     expect(certificate.extension_data.unpack1("H*")).to eq expected_extension_data_hex
   end
+
+  context "invalid" do
+    it "too short data" do
+      bytes = SecureRandom.bytes(20)
+      message = <<~CERT
+        -----BEGIN ED25519 CERT-----
+        #{Base64.encode64(bytes)}
+        -----END ED25519 CERT-----
+      CERT
+
+      expect {
+        described_class.new(descriptor_data: message)
+      }.to raise_error(Zwiebel::ContentLengthError, "certificate should be at least 104 bytes")
+    end
+  end
 end
