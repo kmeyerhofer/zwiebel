@@ -22,4 +22,7 @@ module Zwiebel
 
   class FileReadError < StandardError
   end
+
+  class InvalidAddressError < StandardError
+  end
 end
