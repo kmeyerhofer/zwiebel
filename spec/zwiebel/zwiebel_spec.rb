@@ -26,7 +26,7 @@ RSpec.describe "Zwiebel" do
     end
 
     context "invalid" do
-      it { expect { Zwiebel.v3_address_pubkey(nil) }.to raise_error(Zwiebel::DataError, "address invalid") }
+      it { expect { Zwiebel.v3_address_pubkey(nil) }.to raise_error(Zwiebel::InvalidAddressError, "address invalid") }
     end
   end
 
