@@ -16,6 +16,7 @@
 module Zwiebel
   module HiddenService
     class IntroductionPoint
+      LinkSpecifier = Struct.new(:address, :fingerprint, :port)
       attr_accessor :auth_key_ed25519, :link_specifiers, :enc_key_cert_ed25519
 
       def initialize(data:)
@@ -64,22 +65,16 @@ module Zwiebel
           if type == 0
             address = value.byteslice(0, 4).bytes.join(".")
             port = value.byteslice(4, 2).unpack1("S>*")
-            @link_specifiers.push(
-              OpenStruct.new(address: address, port: port)
-            )
+            @link_specifiers.push(LinkSpecifier.new(address, nil, port))
           elsif type == 1
             address = (0..14).step(2).map do |x|
               sprintf("%04x", value.byteslice(x, x + 2).unpack1("S>*"))
             end.join(":")
             port = value.byteslice(16, 2).unpack1("S>*")
-            @link_specifiers.push(
-              OpenStruct.new(address: address, port: port)
-            )
+            @link_specifiers.push(LinkSpecifier.new(address, nil, port))
           else
             # Type 2, 3 and above
-            @link_specifiers.push(
-              OpenStruct.new(fingerprint: value)
-            )
+            @link_specifiers.push(LinkSpecifier.new(nil, value, nil))
           end
         end
       end

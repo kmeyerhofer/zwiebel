@@ -15,6 +15,7 @@
 
 module Zwiebel
   class Ed25519Certificate
+    Extension = Struct.new(:data, :extension_type, :flags)
     KEY_LENGTH = 32
     HEADER_LENGTH = 40
     SIGNATURE_LENGTH = 64
@@ -61,11 +62,7 @@ module Zwiebel
         index += 1
         data = extension_data_with_header.byteslice(index, data_size)
         index += data_size
-        extensions.push(OpenStruct.new(
-          extension_type: extension_type,
-          flags: flags,
-          data: data,
-        ))
+        extensions.push(Extension.new(data, extension_type, flags))
       end
     end
 
