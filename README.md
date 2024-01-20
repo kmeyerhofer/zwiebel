@@ -54,7 +54,7 @@ cookie_hash = Zwiebel.cookie_file_hash(file_path: "/run/tor/control.authcookie")
 - Add `CHANGELOG` entry.
 - `gem build zwiebel.gemspec`
 - `gem push zwiebel-version.gem`
-- Add version tag - `git tag -a v0.0.3 -m "Version 0.0.3"`
+- Add version tag, on master branch after merging above changes - `git tag -a v0.0.3 -m "Version 0.0.3"`
 
 ## License
 
