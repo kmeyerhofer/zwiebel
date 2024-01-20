@@ -4,6 +4,16 @@
 ```ruby
 require_relative 'lib/zwiebel'
 cookie_hash = Zwiebel.cookie_file_hash(file_path: "/run/tor/control.authcookie")
+
+#
+# New way
+#
+address = "p53lf57qovyuvwsc6xnrppyply3vtqm7l6pcobkmyqsiofyeznfu5uqd.onion"
+Zwiebel.start(address, cookie: cookie_hash)
+
+#
+# Old way
+#
 tor = Zwiebel::Control.new(cookie: cookie_hash)
 tor.authenticate
 
@@ -69,13 +79,13 @@ end
 
 ```
 
-## Next steps
 
-2.5.1.1 First layer of encryption logic
-  Understand how to get the blinded public key
+## Tor notes
 
-2.1 Deriving blinded keys and subcredentials `[SUBCRED]`
-  Each time period, the hs host uses a different blinded private key.
+If Tor cannot retrieve current consensus, move or remove any cached files in `/var/lib/tor`
 
-1.9 A menagerie of keys
-  master (hidden service) identity key. Public key encoded in the ".onion" address.
++ cached-certs
++ cached-microdesc-consensus
++ cached-microdescs
++ lock
++ state
