@@ -19,7 +19,6 @@ module Zwiebel
     KEY_LENGTH = 32
     HEADER_LENGTH = 40
     SIGNATURE_LENGTH = 64
-
     attr_accessor :cert_type, :descriptor_data, :extension_data_with_header, :extensions, :expiration_hours, :expires, :key, :signature, :version
 
     def initialize(descriptor_data:)

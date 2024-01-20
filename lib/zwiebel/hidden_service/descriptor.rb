@@ -18,6 +18,7 @@ module Zwiebel
     class Descriptor
       FIELDS = %w(hs-descriptor descriptor-lifetime descriptor-signing-key-cert revision-counter superencrypted signature).freeze
       attr_accessor :certificate, :string
+
       def initialize(string:)
         @string = string
         parse
