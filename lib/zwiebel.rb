@@ -28,6 +28,44 @@ require_relative "zwiebel/version"
 
 module Zwiebel
 
+  def self.start(address, settings = {}, &block)
+    raise InvalidAddressError, "address invalid" unless v3_address_valid?(address)
+    setting_options = %i(host port cookie)
+    settings.delete_if do |k, _|
+      !setting_options.include?(k)
+    end
+
+    tor = Control.new(**settings)
+    tor.authenticate
+    address_without_suffix = address.gsub(".onion", "")
+    tor.send_command("GETINFO", "hs/client/desc/id/#{address_without_suffix}")
+
+    hs_reply = tor.read_reply
+    if hs_reply.start_with?("551")
+      # Put this into a reusable method # TODO
+      tor.send_command("HSFETCH", address_without_suffix)
+      tor.send_command("GETINFO", "hs/client/desc/id/#{address_without_suffix}")
+      hs_reply = tor.read_reply
+    end
+
+    hs_descriptor = ""
+    descriptor_current_field = nil
+    while hs_reply != "250 OK"
+      hs_reply = tor.read_reply
+      next if hs_reply == "." || hs_reply == "250 OK"
+      hs_descriptor += "#{hs_reply}\n"
+    end
+
+    if hs_descriptor.length < 1
+      raise DataError, "hidden service descriptor not found"
+    else
+      hidden_service_v3 = HiddenService::V3.new(
+        descriptor_string: hs_descriptor,
+        onion_address: address
+      ).decrypt
+    end
+  end
+
   def self.v3_address_valid?(address)
     # tor address-spec
     # onion_address = base32(PUBKEY | CHECKSUM | VERSION)
@@ -46,18 +84,15 @@ module Zwiebel
     pubkey = decoded_address.byteslice(0, 32)
     checksum = decoded_address.byteslice(32, 2)
     version = decoded_address.byteslice(34)
-
     onion_checksum = ".onion checksum"
     calculated_checksum = onion_checksum + pubkey + version
-
     digest = OpenSSL::Digest.digest("SHA3-256", calculated_checksum)
     checksum_truncated = digest.byteslice(0, 2)
-
     checksum_truncated == checksum
   end
 
   def self.v3_address_pubkey(address)
-    raise DataError, "address invalid" unless v3_address_valid?(address)
+    raise InvalidAddressError, "address invalid" unless v3_address_valid?(address)
 
     decoded_address = Base32.decode(address.gsub(".onion", "").upcase)
     decoded_address.byteslice(0, 32)
