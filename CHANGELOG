@@ -1,3 +1,4 @@
+0.0.4 - 2024-01-19 - Tor hidden descriptor decryption
 0.0.3 - 2023-12-02 - Tor V3 address validity, checks for String parameter
 0.0.2 - 2023-11-23 - Tor control protocol API
 0.0.1 - 2023-11-04 - Gem creation
