@@ -77,5 +77,17 @@ module Zwiebel
     def read_reply
       @socket.readline.chomp
     end
+
+    def whole_reply
+      results = []
+      reply = read_reply
+      while reply != "250 OK"
+        break if reply.start_with?("551")
+        results.push(reply)
+        reply = read_reply
+      end
+      results.push(reply)
+      results
+    end
   end
 end
