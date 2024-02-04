@@ -67,6 +67,7 @@ module Zwiebel
     def send_command(command, *args)
       authenticate unless authenticated?
       send_line([command, *args].join(" "))
+      whole_reply
     end
 
     def send_line(line)
@@ -88,6 +89,36 @@ module Zwiebel
       end
       results.push(reply)
       results
+    end
+
+    def dormant?
+      reply = send_command("GETINFO", "dormant")
+      reply[0].split("=")[1] == "1"
+    end
+
+    def circuit_established?
+      reply = send_command("GETINFO", "status/circuit-established")
+      reply[0].split("=")[1] == "1"
+    end
+
+    def bootstrap_progress
+      reply = send_command("GETINFO", "status/bootstrap-phase")
+      if reply[1] == "250 OK"
+        reply[0].scan(/(?<=PROGRESS=)\d{1,3}/)
+      else
+        "0"
+      end
+    end
+
+    def circuits
+      reply = send_command("GETINFO", "circuit-status")
+      if reply[-1] == "250 OK"
+        reply.reject do |r|
+          r == "250+circuit-status=" || r == "." || r == "250 OK"
+        end
+      else
+        reply
+      end
     end
   end
 end
