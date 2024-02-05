@@ -15,7 +15,7 @@
 
 module Zwiebel
   class Shake256
-    HEX_CHARS = '0123456789abcdef'.freeze
+    HEX_CHARS = "0123456789abcdef".freeze
     PADDING = [31, 7936, 2031616, 520093696].freeze
     SHIFT = [0, 8, 16, 24].freeze
     RC = [

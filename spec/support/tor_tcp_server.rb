@@ -1,4 +1,4 @@
-require 'socket'
+require "socket"
 
 class TorTcpServer
   attr_reader :client, :socket
