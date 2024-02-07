@@ -15,6 +15,7 @@
 
 module Zwiebel
   class Control
+    TorSocks = Struct.new(:ip, :port)
     attr_accessor :cookie, :host, :port, :socket
 
     def initialize(host: "127.0.0.1", port: 9051, cookie: nil)
@@ -118,6 +119,21 @@ module Zwiebel
         end
       else
         reply
+      end
+    end
+
+    def socks_listeners
+      reply = send_command("GETINFO", "net/listeners/socks")
+      if reply[1] == "250 OK"
+        reply[0].gsub("\"", "").split("=")[1].split(" ").filter_map do |data|
+          if data.start_with?("unix:")
+            URI.parse(data)
+          elsif data.match?(/\A(\d+)\.(\d+)\.(\d+)\.(\d+)/)
+            address = IPAddr::new(data.split(":")[0])
+            port = data.split(":")[1].to_i
+            TorSocks.new(address, port)
+          end
+        end
       end
     end
   end
