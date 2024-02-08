@@ -59,10 +59,8 @@ module Zwiebel
     end
 
     def version
-      send_command("GETINFO", "version")
-      reply = read_reply.split("=").last
-      read_reply
-      reply
+      reply = send_command("GETINFO", "version")
+      reply[0].split("=")[1]
     end
 
     def send_command(command, *args)
