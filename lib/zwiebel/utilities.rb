@@ -17,6 +17,10 @@ require "base64"
 
 module Zwiebel
   class Utilities
+    CHAR = 1
+    SHORT = 2     # S>
+    LONG = 4      # L>
+    LONG_LONG = 8 # Q>
     SALT_LENGTH = 16
     MAC_LENGTH = 32
     S_KEY_LENGTH = 32
@@ -27,6 +31,22 @@ module Zwiebel
       # 2.2.1 [TIME-PERIODS]
       current_time = Time.now.utc.to_i
       (current_time / 60 - 1440) / 1440
+    end
+
+    def self.link_protocol(version)
+      protocol = { version: version }
+      if version > 3
+        protocol[:circuit_id_size] = LONG
+        protocol[:pack_type] = "L>"
+        protocol[:first_circuit_id] = 0x80000000
+      else
+        protocol[:circuit_id_size] = SHORT
+        protocol[:pack_type] = "S>"
+        protocol[:first_circuit_id] = 0x01
+      end
+      cell_header_size = protocol[:circuit_id_size] + 1
+      protocol[:fixed_cell_length] = cell_header_size + Zwiebel::Cell::BaseCell::FIXED_PAYLOAD_LENGTH
+      protocol
     end
 
     def self.decrypt_layer(encrypted_data:, constant:, revision_counter:, subcredential:, blinded_key:)

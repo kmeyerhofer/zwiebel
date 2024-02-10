@@ -16,7 +16,23 @@
 module Zwiebel
   module Cell
     class BaseCell
+      FIXED_PAYLOAD_LENGTH = 509
+      attr_accessor :packet
 
+      def pack(link_protocol_version, command, fixed_size)
+        link_protocol = Utilities.link_protocol(link_protocol_version)
+
+        @packet = [@circuit_id].pack(link_protocol[:pack_type]) + [command].pack("C") + @payload
+
+        if fixed_size
+          if @packet.length > FIXED_PAYLOAD_LENGTH
+            raise 'error'
+          end
+          @packet += [0].pack("C") * (link_protocol[:fixed_cell_length] - @packet.length)
+        end
+
+        @packet
+      end
     end
   end
 end

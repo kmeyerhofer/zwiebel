@@ -94,6 +94,13 @@ while hs_reply != "250 OK"
 
 end
 
+
+socks = tor.socks_listeners
+tcp_socket = socks.select { |x| x.respond_to?(:ip) }
+
+client = Zwiebel::Connection.new(host: tcp_socket.ip.to_s, port: tcp_socket.port)
+# TODO
+
 ```
 
 
@@ -112,7 +119,10 @@ If Tor cannot retrieve current consensus, move or remove any cached files in `/v
 tor-spec.txt
 6.2 Opening streams and transferring data
 
-Constructs a RELAY_BEGIN cell.
+Link protocol circuit_id creator.
+
+Constructs a RELAY_BEGIN cell
+  - Requires a StreamID to build. Get one through control port
 
 If cannot be created, RELAY_END is replied.
 Otherwise, RELAY_CONNECTED cell is replied.
