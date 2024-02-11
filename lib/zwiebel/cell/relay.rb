@@ -48,9 +48,9 @@ module Zwiebel
         @stream_id = stream_id
       end
 
-      def build_packet(link_protocol_version)
-        @payload = [command].pack("C") + [recognized].pack("S>") + [stream_id].pack("S>") + [digest].pack("L>") + data
-        pack(link_protocol_version, COMMAND, FIXED_SIZE)
+      def build_packet(link_protocol_version:)
+        @payload = [command].pack("C") + [recognized].pack("S>") + [stream_id].pack("S>") + [digest].pack("L>") + [data.length].pack("S>") + data
+        pack(link_protocol_version: link_protocol_version, command: COMMAND, fixed_size: FIXED_SIZE)
       end
     end
   end

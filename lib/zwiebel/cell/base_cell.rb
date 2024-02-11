@@ -19,7 +19,7 @@ module Zwiebel
       FIXED_PAYLOAD_LENGTH = 509
       attr_accessor :packet
 
-      def pack(link_protocol_version, command, fixed_size)
+      def pack(link_protocol_version:, command:, fixed_size:)
         link_protocol = Utilities.link_protocol(link_protocol_version)
 
         @packet = [@circuit_id].pack(link_protocol[:pack_type]) + [command].pack("C") + @payload
