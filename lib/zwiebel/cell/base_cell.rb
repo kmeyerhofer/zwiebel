@@ -22,7 +22,7 @@ module Zwiebel
       def pack(link_protocol_version:, command:, fixed_size:)
         link_protocol = Utilities.link_protocol(link_protocol_version)
 
-        @packet = [@circuit_id].pack(link_protocol[:pack_type]) + [command].pack("C") + @payload
+        @packet = [@circuit_id].pack(link_protocol[:pack_type]) + (fixed_size ? "" : [@payload.length + @unused.length].pack("S>")) + [command].pack("C") + @payload + @unused
 
         if fixed_size
           if @packet.length > FIXED_PAYLOAD_LENGTH

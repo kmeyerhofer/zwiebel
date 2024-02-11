@@ -37,15 +37,16 @@ module Zwiebel
       # HIDDEN_SERVICES
       # 35..40
 
-      attr_accessor :circuit_id, :command, :data, :digest, :payload, :recognized, :stream_id
+      attr_accessor :circuit_id, :command, :data, :digest, :payload, :recognized, :stream_id, :unused
 
-      def initialize(circuit_id:, command:, data:, digest:, recognized:, stream_id:)
+      def initialize(circuit_id:, command:, data:, digest:, recognized:, stream_id:, unused: "")
         @circuit_id = circuit_id
         @command = command
         @data = data
         @digest = digest
         @recognized = recognized
         @stream_id = stream_id
+        @unused = unused
       end
 
       def build_packet(link_protocol_version:)
