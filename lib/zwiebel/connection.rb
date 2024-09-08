@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU Lesser General Public License along with zwiebel.
 # If not, see <https://www.gnu.org/licenses/>.
 
+require "socks_handler"
+
 module Zwiebel
   class Connection
     attr_accessor :cookie, :host, :port, :socket
@@ -26,7 +28,8 @@ module Zwiebel
     def connect
       close
       @socket = TCPSocket.new(host, port)
-      @socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
+      # @socket.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
+
     end
 
     def connected?

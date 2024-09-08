@@ -96,9 +96,11 @@ end
 
 
 socks = tor.socks_listeners
-tcp_socket = socks.select { |x| x.respond_to?(:ip) }
+tcp_socket = socks.select { |x| x.respond_to?(:ip) }[0]
 
 client = Zwiebel::Connection.new(host: tcp_socket.ip.to_s, port: tcp_socket.port)
+relay = Zwiebel::Cell::Relay.new(circuit_id: 3, command: Zwiebel::Cell::Relay::RELAY_BEGIN, data: "google.com:8000".pack("L>"), digest: 0, recognized: 0, stream_id: 1)
+
 # TODO
 
 ```

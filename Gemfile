@@ -4,6 +4,7 @@ gemspec
 
 group :development, :test do
   gem "pry"
+  gem "socks_handler"
 end
 
 group :test do
