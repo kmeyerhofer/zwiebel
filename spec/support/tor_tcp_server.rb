@@ -1,4 +1,4 @@
-require 'socket'
+require "socket"
 
 class TorTcpServer
   attr_reader :client, :socket
@@ -23,7 +23,7 @@ class TorTcpServer
       if data.match?(/authenticate/i)
         @client.puts("250 OK\n")
       elsif data.match?(/version/i)
-        @client.puts("250-version=0.3.5\n250 OK\n")
+        @client.puts("250-version=0.4.1.1\n250 OK\n")
       else
         @client.puts("#{data}\n")
       end

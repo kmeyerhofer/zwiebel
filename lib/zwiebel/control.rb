@@ -15,6 +15,7 @@
 
 module Zwiebel
   class Control
+    TorSocks = Struct.new(:ip, :port)
     attr_accessor :cookie, :host, :port, :socket
 
     def initialize(host: "127.0.0.1", port: 9051, cookie: nil)
@@ -58,15 +59,14 @@ module Zwiebel
     end
 
     def version
-      send_command("GETINFO", "version")
-      reply = read_reply.split("=").last
-      read_reply
-      reply
+      reply = send_command("GETINFO", "version")
+      reply[0].split("=")[1]
     end
 
     def send_command(command, *args)
       authenticate unless authenticated?
       send_line([command, *args].join(" "))
+      whole_reply
     end
 
     def send_line(line)
@@ -76,6 +76,63 @@ module Zwiebel
 
     def read_reply
       @socket.readline.chomp
+    end
+
+    def whole_reply
+      results = []
+      reply = read_reply
+      while reply != "250 OK"
+        break if reply.start_with?("551")
+        results.push(reply)
+        reply = read_reply
+      end
+      results.push(reply)
+      results
+    end
+
+    def dormant?
+      reply = send_command("GETINFO", "dormant")
+      reply[0].split("=")[1] == "1"
+    end
+
+    def circuit_established?
+      reply = send_command("GETINFO", "status/circuit-established")
+      reply[0].split("=")[1] == "1"
+    end
+
+    def bootstrap_progress
+      reply = send_command("GETINFO", "status/bootstrap-phase")
+      if reply[1] == "250 OK"
+        reply[0].scan(/(?<=PROGRESS=)\d{1,3}/)
+      else
+        "0"
+      end
+    end
+
+    def circuits
+      reply = send_command("GETINFO", "circuit-status")
+      if reply[-1] == "250 OK"
+        reply.reject do |r|
+          r == "250+circuit-status=" || r == "." || r == "250 OK"
+        end
+      else
+        reply
+      end
+    end
+
+    def socks_listeners
+      reply = send_command("GETINFO", "net/listeners/socks")
+      if reply[1] == "250 OK"
+        reply[0].gsub("\"", "").split("=")[1].split(" ").filter_map do |data|
+          if data.start_with?("unix:")
+            URI.parse(data)
+          elsif data.match?(/\A(\d+)\.(\d+)\.(\d+)\.(\d+)/)
+            address = IPAddr::new(data.split(":")[0])
+            port = data.split(":")[1].to_i
+            TorSocks.new(address, port)
+          end
+        end
+      end
     end
   end
 end

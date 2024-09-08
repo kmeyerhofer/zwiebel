@@ -2,7 +2,7 @@
 # Development notes
 
 ```ruby
-require_relative 'lib/zwiebel'
+require_relative "lib/zwiebel"
 cookie_hash = Zwiebel.cookie_file_hash(file_path: "/run/tor/control.authcookie")
 
 #
@@ -17,6 +17,23 @@ Zwiebel.start(address, cookie: cookie_hash)
 tor = Zwiebel::Control.new(cookie: cookie_hash)
 tor.authenticate
 
+# Get Tor Socks IP:Port
+tor.send_command("GETINFO", "net/listeners/socks")
+
+tor.send_command("GETINFO", "circuit-status")
+tor.send_command("GETINFO", "dormant")
+tor.send_command("GETINFO", "uptime")
+tor.send_command("GETINFO", "network-liveness")
+tor.send_command("GETINFO", "version")
+tor.send_command("GETINFO", "status/circuit-established")
+tor.send_command("GETINFO", "status/enough-dir-info")
+tor.send_command("GETINFO", "status/good-server-descriptor")
+tor.send_command("GETINFO", "status/reachability-succeeded")
+tor.send_command("GETINFO", "status/bootstrap-phase")
+tor.send_command("GETINFO", "status/bootstrap-phase")
+tor.send_command("SIGNAL", "CLEARDNSCACHE")
+tor.send_command("SIGNAL", "NEWNYM")
+tor.send_command("SIGNAL", "ACTIVE")
 
 tor.send_command("GETINFO", "md/all")
 results = []
@@ -32,7 +49,7 @@ raise "Invalid" unless Zwiebel.v3_address_valid?("#{ddg_address}.onion")
 tor.send_command("GETINFO", "hs/client/desc/id/#{ddg_address}")
 
 hs_reply = tor.read_reply
-if hs_reply.start_with?('551')
+if hs_reply.start_with?("551")
   # Not in cache. Look up, then check again
   tor.send_command("HSFETCH", ddg_address)
   raise "HSFETCH issue" unless tor.read_reply == "250 OK"
@@ -77,6 +94,15 @@ while hs_reply != "250 OK"
 
 end
 
+
+socks = tor.socks_listeners
+tcp_socket = socks.select { |x| x.respond_to?(:ip) }[0]
+
+client = Zwiebel::Connection.new(host: tcp_socket.ip.to_s, port: tcp_socket.port)
+relay = Zwiebel::Cell::Relay.new(circuit_id: 3, command: Zwiebel::Cell::Relay::RELAY_BEGIN, data: "google.com:8000".pack("L>"), digest: 0, recognized: 0, stream_id: 1)
+
+# TODO
+
 ```
 
 
@@ -89,3 +115,26 @@ If Tor cannot retrieve current consensus, move or remove any cached files in `/v
 + cached-microdescs
 + lock
 + state
+
+## Relays
+
+tor-spec.txt
+6.2 Opening streams and transferring data
+
+Link protocol circuit_id creator.
+
+Constructs a RELAY_BEGIN cell
+  - Requires a StreamID to build. Get one through control port
+
+If cannot be created, RELAY_END is replied.
+Otherwise, RELAY_CONNECTED cell is replied.
+
+Data cells now in RELAY_DATA.
+
+Streams are automatically added to circuits by Tor.
+
+How to add a stream to Tor?
+"When a client application creates a new stream (by opening a SOCKS connection or launching a resolve request)
+we attach it to an appropriate open circuit if one exists, or wit if an appropriate circuit is in-progress.
+
+Send a SOCKS connection to the Tor socks port
